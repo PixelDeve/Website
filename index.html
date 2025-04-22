@@ -37,15 +37,37 @@
       align-items: center;
       justify-content: space-between;
       padding: 1rem 0;
+      position: relative;
     }
-    nav a {
+    .logo a {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .menu-toggle {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+    }
+    .menu-toggle span {
+      height: 2px;
+      width: 25px;
+      background: var(--primary);
+      margin: 4px 0;
+      transition: transform var(--transition);
+    }
+    .links {
+      display: flex;
+    }
+    .links a {
       color: var(--primary);
       text-decoration: none;
       margin-left: 1.5rem;
       font-weight: 500;
       transition: color var(--transition);
     }
-    nav a:hover {
+    .links a:hover {
       color: var(--accent);
     }
     header {
@@ -107,6 +129,7 @@
       border-radius: 4px;
       font-family: inherit;
       transition: border var(--transition);
+      width: 100%;
     }
     .contact-form input:focus,
     .contact-form textarea:focus {
@@ -125,6 +148,7 @@
       font-weight: 600;
       transition: background var(--transition);
       text-align: center;
+      width: fit-content;
     }
     .btn:hover {
       background: #2980b9;
@@ -137,6 +161,26 @@
       color: #777;
     }
     @media (max-width: 768px) {
+      .menu-toggle {
+        display: flex;
+      }
+      .links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        background: #fff;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        padding: 1rem 0;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+      .links.active {
+        display: flex;
+      }
+      .links a {
+        margin: 0.5rem 1rem;
+      }
       header h1 { font-size: 2.25rem; }
       header p { font-size: 1rem; }
     }
@@ -146,6 +190,11 @@
   <nav>
     <div class="container nav-container">
       <div class="logo"><a href="#">Ariaan Safwan</a></div>
+      <div class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
       <div class="links">
         <a href="#about">About</a>
         <a href="#projects">Projects</a>
@@ -185,7 +234,7 @@
     <section id="contact" class="contact">
       <div class="contact-content">
         <h2>Get in Touch</h2>
-        <form class="contact-form" action="mailto:email@example.com" method="post" enctype="text/plain">
+        <form class="contact-form" action="mailto:ariaansafwan12@gmail.com" method="post" enctype="text/plain">
           <input type="text" name="name" placeholder="Your Name" required />
           <input type="email" name="email" placeholder="Your Email" required />
           <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
@@ -197,5 +246,12 @@
   <footer>
     <p>&copy; 2025 Ariaan Safwan. All rights reserved.</p>
   </footer>
+  <script>
+    const menuToggle = document.querySelector('.menu-toggle');
+    const links = document.querySelector('.links');
+    menuToggle.addEventListener('click', () => {
+      links.classList.toggle('active');
+    });
+  </script>
 </body>
 </html>
