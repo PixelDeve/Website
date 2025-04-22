@@ -1,0 +1,201 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ariaan Safwan | Student Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --accent: #3498db;
+      --light-bg: #f4f7fa;
+      --text: #333;
+      --heading: #2c3e50;
+      --transition: 0.3s ease;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light-bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    nav {
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .container {
+      width: 90%; max-width: 1100px; margin: auto;
+    }
+    .nav-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+    }
+    nav a {
+      color: var(--primary);
+      text-decoration: none;
+      margin-left: 1.5rem;
+      font-weight: 500;
+      transition: color var(--transition);
+    }
+    nav a:hover {
+      color: var(--accent);
+    }
+    header {
+      background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+      color: #fff;
+      padding: 5rem 0;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    header p {
+      font-size: 1.25rem;
+      max-width: 600px;
+      margin: 0.5rem auto;
+    }
+    section {
+      padding: 3rem 0;
+    }
+    .about, .projects, .contact {
+      background: #fff;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .about-content, .projects-content, .contact-content {
+      padding: 2rem;
+    }
+    .about h2, .projects h2, .contact h2 {
+      color: var(--heading);
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+    .projects-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    .project-item {
+      background: var(--light-bg);
+      padding: 1.5rem;
+      border-radius: 6px;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .project-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+    }
+    .contact-form input,
+    .contact-form textarea {
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: inherit;
+      transition: border var(--transition);
+    }
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: background var(--transition);
+      text-align: center;
+    }
+    .btn:hover {
+      background: #2980b9;
+    }
+    footer {
+      text-align: center;
+      padding: 1.5rem 0;
+      background: #fff;
+      font-size: 0.9rem;
+      color: #777;
+    }
+    @media (max-width: 768px) {
+      header h1 { font-size: 2.25rem; }
+      header p { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container nav-container">
+      <div class="logo"><a href="#">Ariaan Safwan</a></div>
+      <div class="links">
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+  <header>
+    <div class="container">
+      <h1>Hi, I'm Ariaan Safwan</h1>
+      <p>A passionate student exploring the world of technology, design, and innovation. Welcome to my personal space on the web.</p>
+    </div>
+  </header>
+  <main class="container">
+    <section id="about" class="about">
+      <div class="about-content">
+        <h2>About Me</h2>
+        <p>Hello! I'm Ariaan Safwan, currently a dedicated student honing my skills in web development, programming, and digital design. I love creating solutions that make life easier and more enjoyable.</p>
+      </div>
+    </section>
+    <section id="projects" class="projects">
+      <div class="projects-content">
+        <h2>My Projects</h2>
+        <div class="projects-list">
+          <div class="project-item">
+            <h3>Project One</h3>
+            <p>Brief description of your first project, highlighting key technologies and achievements.</p>
+          </div>
+          <div class="project-item">
+            <h3>Project Two</h3>
+            <p>Brief description of your second project, focusing on challenges solved and skills gained.</p>
+          </div>
+          <!-- Add more project items as needed -->
+        </div>
+      </div>
+    </section>
+    <section id="contact" class="contact">
+      <div class="contact-content">
+        <h2>Get in Touch</h2>
+        <form class="contact-form" action="mailto:email@example.com" method="post" enctype="text/plain">
+          <input type="text" name="name" placeholder="Your Name" required />
+          <input type="email" name="email" placeholder="Your Email" required />
+          <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+          <button type="submit" class="btn">Send Message</button>
+        </form>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2025 Ariaan Safwan. All rights reserved.</p>
+  </footer>
+</body>
+</html>
