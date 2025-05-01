@@ -2,256 +2,163 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ariaan Safwan | Student Portfolio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <title>Dino Run Pro</title>
   <style>
-    :root {
-      --primary: #2c3e50;
-      --accent: #3498db;
-      --light-bg: #f4f7fa;
-      --text: #333;
-      --heading: #2c3e50;
-      --transition: 0.3s ease;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--light-bg);
-      color: var(--text);
-      line-height: 1.6;
+      margin: 0;
+      overflow: hidden;
+      background: #f4f4f4;
     }
-    nav {
-      background: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .container {
-      width: 90%; max-width: 1100px; margin: auto;
-    }
-    .nav-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 0;
-      position: relative;
-    }
-    .logo a {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--primary);
-      text-decoration: none;
-    }
-    .menu-toggle {
-      display: none;
-      flex-direction: column;
-      cursor: pointer;
-    }
-    .menu-toggle span {
-      height: 2px;
-      width: 25px;
-      background: var(--primary);
-      margin: 4px 0;
-      transition: transform var(--transition);
-    }
-    .links {
-      display: flex;
-    }
-    .links a {
-      color: var(--primary);
-      text-decoration: none;
-      margin-left: 1.5rem;
-      font-weight: 500;
-      transition: color var(--transition);
-    }
-    .links a:hover {
-      color: var(--accent);
-    }
-    header {
-      background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
-      color: #fff;
-      padding: 5rem 0;
-      text-align: center;
-    }
-    header h1 {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-    header p {
-      font-size: 1.25rem;
-      max-width: 600px;
-      margin: 0.5rem auto;
-    }
-    section {
-      padding: 3rem 0;
-    }
-    .about, .projects, .contact {
-      background: #fff;
-      margin-bottom: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .about-content, .projects-content, .contact-content {
-      padding: 2rem;
-    }
-    .about h2, .projects h2, .contact h2 {
-      color: var(--heading);
-      margin-bottom: 1rem;
-      font-size: 2rem;
-    }
-    .projects-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-    }
-    .project-item {
-      background: var(--light-bg);
-      padding: 1.5rem;
-      border-radius: 6px;
-      transition: transform var(--transition), box-shadow var(--transition);
-    }
-    .project-item:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .contact-form {
-      display: flex;
-      flex-direction: column;
-    }
-    .contact-form input,
-    .contact-form textarea {
-      padding: 0.75rem 1rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-family: inherit;
-      transition: border var(--transition);
-      width: 100%;
-    }
-    .contact-form input:focus,
-    .contact-form textarea:focus {
-      border-color: var(--accent);
-      outline: none;
-    }
-    .btn {
-      display: inline-block;
-      background: var(--accent);
-      color: #fff;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      transition: background var(--transition);
-      text-align: center;
-      width: fit-content;
-    }
-    .btn:hover {
-      background: #2980b9;
-    }
-    footer {
-      text-align: center;
-      padding: 1.5rem 0;
-      background: #fff;
-      font-size: 0.9rem;
-      color: #777;
-    }
-    @media (max-width: 768px) {
-      .menu-toggle {
-        display: flex;
-      }
-      .links {
-        display: none;
-        flex-direction: column;
-        width: 100%;
-        background: #fff;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        padding: 1rem 0;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      }
-      .links.active {
-        display: flex;
-      }
-      .links a {
-        margin: 0.5rem 1rem;
-      }
-      header h1 { font-size: 2.25rem; }
-      header p { font-size: 1rem; }
+    canvas {
+      display: block;
+      background: linear-gradient(to bottom, #87ceeb, #f4f4f4);
     }
   </style>
 </head>
 <body>
-  <nav>
-    <div class="container nav-container">
-      <div class="logo"><a href="#">Ariaan Safwan</a></div>
-      <div class="menu-toggle">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-      <div class="links">
-        <a href="#about">About</a>
-        <a href="#projects">Projects</a>
-        <a href="#contact">Contact</a>
-      </div>
-    </div>
-  </nav>
-  <header>
-    <div class="container">
-      <h1>Hi, I'm Ariaan Safwan</h1>
-      <p>A passionate student exploring the world of technology, design, and innovation. Welcome to my personal space on the web.</p>
-    </div>
-  </header>
-  <main class="container">
-    <section id="about" class="about">
-      <div class="about-content">
-        <h2>About Me</h2>
-        <p>Hello! I'm Ariaan Safwan, currently a dedicated student honing my skills in web development, programming, and digital design. I love creating solutions that make life easier and more enjoyable.</p>
-      </div>
-    </section>
-    <section id="projects" class="projects">
-      <div class="projects-content">
-        <h2>My Projects</h2>
-        <div class="projects-list">
-          <div class="project-item">
-            <h3>Project One</h3>
-            <p>Brief description of your first project, highlighting key technologies and achievements.</p>
-          </div>
-          <div class="project-item">
-            <h3>Project Two</h3>
-            <p>Brief description of your second project, focusing on challenges solved and skills gained.</p>
-          </div>
-          <!-- Add more project items as needed -->
-        </div>
-      </div>
-    </section>
-    <section id="contact" class="contact">
-      <div class="contact-content">
-        <h2>Get in Touch</h2>
-        <form class="contact-form" action="mailto:ariaansafwan12@gmail.com" method="post" enctype="text/plain">
-          <input type="text" name="name" placeholder="Your Name" required />
-          <input type="email" name="email" placeholder="Your Email" required />
-          <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
-          <button type="submit" class="btn">Send Message</button>
-        </form>
-      </div>
-    </section>
-  </main>
-  <footer>
-    <p>&copy; 2025 Ariaan Safwan. All rights reserved.</p>
-  </footer>
+  <canvas id="gameCanvas"></canvas>
   <script>
-    const menuToggle = document.querySelector('.menu-toggle');
-    const links = document.querySelector('.links');
-    menuToggle.addEventListener('click', () => {
-      links.classList.toggle('active');
-    });
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;// Game state
+let gameSpeed = 6;
+let gravity = 1;
+let score = 0;
+let highScore = 0;
+let gameOver = false;
+
+// Dino character
+const dino = {
+  x: 50,
+  y: canvas.height - 150,
+  width: 50,
+  height: 50,
+  yVelocity: 0,
+  jumping: false,
+  draw() {
+    ctx.fillStyle = '#444';
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+  },
+  update() {
+    if (this.jumping) {
+      this.yVelocity += gravity;
+      this.y += this.yVelocity;
+      if (this.y >= canvas.height - 150) {
+        this.y = canvas.height - 150;
+        this.yVelocity = 0;
+        this.jumping = false;
+      }
+    }
+    this.draw();
+  },
+  jump() {
+    if (!this.jumping) {
+      this.yVelocity = -20;
+      this.jumping = true;
+    }
+  }
+};
+
+// Obstacle
+class Obstacle {
+  constructor() {
+    this.width = 30 + Math.random() * 30;
+    this.height = 30 + Math.random() * 70;
+    this.x = canvas.width;
+    this.y = canvas.height - this.height - 100;
+  }
+  draw() {
+    ctx.fillStyle = '#222';
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+  update() {
+    this.x -= gameSpeed;
+    this.draw();
+  }
+}
+
+const obstacles = [];
+let spawnTimer = 0;
+
+function spawnObstacle() {
+  if (spawnTimer <= 0) {
+    obstacles.push(new Obstacle());
+    spawnTimer = 100 - gameSpeed * 5;
+    if (spawnTimer < 40) spawnTimer = 40;
+  } else {
+    spawnTimer--;
+  }
+}
+
+function collision(rect1, rect2) {
+  return (
+    rect1.x < rect2.x + rect2.width &&
+    rect1.x + rect1.width > rect2.x &&
+    rect1.y < rect2.y + rect2.height &&
+    rect1.y + rect1.height > rect2.y
+  );
+}
+
+function updateScore() {
+  score++;
+  if (score % 100 === 0) gameSpeed += 0.5;
+  if (score > highScore) highScore = score;
+}
+
+function resetGame() {
+  score = 0;
+  gameSpeed = 6;
+  obstacles.length = 0;
+  gameOver = false;
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Ground line
+  ctx.fillStyle = '#888';
+  ctx.fillRect(0, canvas.height - 100, canvas.width, 2);
+
+  dino.update();
+  spawnObstacle();
+
+  obstacles.forEach((obstacle, index) => {
+    obstacle.update();
+    if (collision(dino, obstacle)) {
+      gameOver = true;
+    }
+    if (obstacle.x + obstacle.width < 0) obstacles.splice(index, 1);
+  });
+
+  ctx.fillStyle = '#000';
+  ctx.font = '20px Arial';
+  ctx.fillText('Score: ' + score, 20, 40);
+  ctx.fillText('High Score: ' + highScore, 20, 70);
+
+  if (!gameOver) {
+    updateScore();
+    requestAnimationFrame(animate);
+  } else {
+    ctx.font = '50px Arial';
+    ctx.fillText('Game Over!', canvas.width / 2 - 150, canvas.height / 2);
+    ctx.font = '20px Arial';
+    ctx.fillText('Press R to restart', canvas.width / 2 - 80, canvas.height / 2 + 40);
+  }
+}
+
+animate();
+
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') dino.jump();
+  if (e.code === 'KeyR' && gameOver) resetGame(), animate();
+});
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
   </script>
 </body>
 </html>
