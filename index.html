@@ -5,7 +5,7 @@
   <title>Mini Royale with Joystick and Fire Button</title>
   <style>body { margin: 0; overflow: hidden; }</style>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins/plugins/virtualjoystick.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins/templates/virtualjoystick/virtualjoystick-plugin.min.js"></script>
 </head>
 <body>
 <script>
@@ -23,7 +23,14 @@ window.onload = () => {
       default: 'arcade',
       arcade: { debug: false }
     },
-    scene: { preload, create, update }
+    scene: { preload, create, update },
+    plugins: {
+      scene: [{
+        key: 'rexVirtualJoystick',
+        plugin: rexvirtualjoystickplugin,
+        mapping: 'rexVirtualJoystick'
+      }]
+    }
   };const game = new Phaser.Game(config);
 
 let player, bullets, joystick, fireButton; let lastFireTime = 0;
@@ -54,21 +61,12 @@ player.setCollideWorldBounds(true);
 bullets = this.physics.add.group({ defaultKey: 'bulletRect', maxSize: 20 });
 
 // Joystick setup using Rex Plugin
-joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+joystick = this.rexVirtualJoystick.add(this, {
   x: 100,
   y: this.scale.height - 100,
   radius: 60,
   base: this.add.circle(0, 0, 60, 0x888888, 0.5),
   thumb: this.add.circle(0, 0, 25, 0xcccccc, 0.8),
-}).on('update', () => {
-  const force = joystick.force;
-  const angle = joystick.angle;
-  if (force > 0) {
-    this.physics.velocityFromRotation(Phaser.Math.DegToRad(angle), force * 200, player.body.velocity);
-    player.rotation = Phaser.Math.DegToRad(angle);
-  } else {
-    player.setVelocity(0);
-  }
 });
 
 // Fire Button
@@ -82,7 +80,32 @@ fireButton.on('pointerdown', () => shoot.call(this));
 
 }
 
-function update(time) { bullets.children.each(bullet => { if (bullet.active && (bullet.x < 0 || bullet.x > this.scale.width || bullet.y < 0 || bullet.y > this.scale.height)) { bullets.killAndHide(bullet); bullet.body.enable = false; } }, this); }
+function update(time) { const cursorKeys = joystick.createCursorKeys(); const speed = 200;
+
+let vx = 0, vy = 0;
+if (cursorKeys.left.isDown) vx = -1;
+if (cursorKeys.right.isDown) vx = 1;
+if (cursorKeys.up.isDown) vy = -1;
+if (cursorKeys.down.isDown) vy = 1;
+
+const mag = Math.sqrt(vx * vx + vy * vy);
+if (mag > 0) {
+  vx /= mag;
+  vy /= mag;
+  player.setVelocity(vx * speed, vy * speed);
+  player.rotation = Phaser.Math.Angle.Between(0, 0, vx, vy);
+} else {
+  player.setVelocity(0);
+}
+
+bullets.children.each(bullet => {
+  if (bullet.active && (bullet.x < 0 || bullet.x > this.scale.width || bullet.y < 0 || bullet.y > this.scale.height)) {
+    bullets.killAndHide(bullet);
+    bullet.body.enable = false;
+  }
+}, this);
+
+}
 
 function shoot() { const now = this.time.now; if (now - lastFireTime < 200) return; // Limit fire rate lastFireTime = now;
 
