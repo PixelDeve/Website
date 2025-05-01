@@ -1,34 +1,57 @@
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Dino Run Pro</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       background: #f4f4f4;
+      touch-action: none;
     }
     canvas {
       display: block;
       background: linear-gradient(to bottom, #87ceeb, #f4f4f4);
     }
+    #mobile-controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+    }
+    .btn {
+      width: 60px;
+      height: 60px;
+      background: #222;
+      border-radius: 50%;
+      color: white;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
+  <div id="mobile-controls">
+    <div class="btn" id="jumpBtn">▲</div>
+    <div class="btn" id="restartBtn">R</div>
+  </div>
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;// Game state
-let gameSpeed = 6;
+    canvas.height = window.innerHeight;let gameSpeed = 6;
 let gravity = 1;
 let score = 0;
 let highScore = 0;
 let gameOver = false;
 
-// Dino character
 const dino = {
   x: 50,
   y: canvas.height - 150,
@@ -60,7 +83,6 @@ const dino = {
   }
 };
 
-// Obstacle
 class Obstacle {
   constructor() {
     this.width = 30 + Math.random() * 30;
@@ -116,7 +138,6 @@ function resetGame() {
 function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Ground line
   ctx.fillStyle = '#888';
   ctx.fillRect(0, canvas.height - 100, canvas.width, 2);
 
@@ -143,7 +164,7 @@ function animate() {
     ctx.font = '50px Arial';
     ctx.fillText('Game Over!', canvas.width / 2 - 150, canvas.height / 2);
     ctx.font = '20px Arial';
-    ctx.fillText('Press R to restart', canvas.width / 2 - 80, canvas.height / 2 + 40);
+    ctx.fillText('Press R or tap R to restart', canvas.width / 2 - 110, canvas.height / 2 + 40);
   }
 }
 
@@ -152,6 +173,14 @@ animate();
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Space') dino.jump();
   if (e.code === 'KeyR' && gameOver) resetGame(), animate();
+});
+
+document.getElementById('jumpBtn').addEventListener('touchstart', () => {
+  dino.jump();
+});
+
+document.getElementById('restartBtn').addEventListener('touchstart', () => {
+  if (gameOver) resetGame(), animate();
 });
 
 window.addEventListener('resize', () => {
