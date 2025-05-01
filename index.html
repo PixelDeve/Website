@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,76 +20,19 @@ window.onload = () => {
       arcade: { debug: false }
     },
     scene: { preload, create, update }
-  };const game = new Phaser.Game(config); let playerContainer; let cursors; let bullets;
+  };
 
-function preload() { // No external assets needed for prototype }
+  const game = new Phaser.Game(config);
+  let player;
+  let cursors;
+  let bullets;
+  let lastFired = 0;
 
-function create() { const g = this.make.graphics({ add: false });
+  function preload() {
+    const g = this.make.graphics({ add: false });
 
-// Player circle (green)
-g.fillStyle(0x00ff00, 1);
-g.fillCircle(32, 32, 32);
-g.generateTexture('playerCircle', 64, 64);
-
-// Bullet rectangle (white)
-g.clear();
-g.fillStyle(0xffffff, 1);
-g.fillRect(0, 0, 16, 8);
-g.generateTexture('bulletRect', 16, 8);
-
-// Gun rectangle (grey)
-g.clear();
-g.fillStyle(0x888888, 1);
-g.fillRect(0, 0, 40, 10);
-g.generateTexture('gunRect', 40, 10);
-
-// Create a container to hold player + gun
-playerContainer = this.add.container(400, 300);
-const playerSprite = this.add.sprite(0, 0, 'playerCircle');
-const gunSprite    = this.add.sprite(20, 0, 'gunRect').setOrigin(0, 0.5);
-playerContainer.add([playerSprite, gunSprite]);
-
-// Enable physics on the container
-this.physics.world.enable(playerContainer);
-playerContainer.body.setCollideWorldBounds(true);
-playerContainer.body.setSize(64, 64); // bounding box
-
-// Create bullets group
-bullets = this.physics.add.group({ defaultKey: 'bulletRect', maxSize: 10 });
-
-// Input
-cursors = this.input.keyboard.createCursorKeys();
-this.input.keyboard.on('keydown-SPACE', () => shoot.call(this));
-
-}
-
-function update() { // Player movement const speed = 200; playerContainer.body.setVelocity(0); if (cursors.left.isDown)  playerContainer.body.setVelocityX(-speed); if (cursors.right.isDown) playerContainer.body.setVelocityX(speed); if (cursors.up.isDown)    playerContainer.body.setVelocityY(-speed); if (cursors.down.isDown)  playerContainer.body.setVelocityY(speed);
-
-// Recycle off-screen bullets
-bullets.children.each(b => {
-  if (!b.active) return;
-  if (b.x < 0 || b.x > config.width || b.y < 0 || b.y > config.height) {
-    bullets.killAndHide(b);
-    b.body.enable = false;
-  }
-});
-
-}
-
-function shoot() { const offsetX = Math.cos(playerContainer.rotation) * 32; const offsetY = Math.sin(playerContainer.rotation) * 32; const bx = playerContainer.x + offsetX; const by = playerContainer.y + offsetY;
-
-const bullet = bullets.get(bx, by);
-if (bullet) {
-  bullet.setActive(true).setVisible(true);
-  bullet.body.enable = true;
-  this.physics.velocityFromRotation(
-    this.physics.world.angleToPointer(playerContainer),
-    400,
-    bullet.body.velocity
-  );
-}
-
-} }; </script>
-
-</body>
+    // Player circle
+    g.fillStyle(0x00ff00, 1);
+    g.fillCircle(16, 16, 16);
+    </body>
 </html>
