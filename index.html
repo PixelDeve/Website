@@ -11,9 +11,8 @@
 </head>
 <body>
 <script>
-console.log('Loading game...');
 window.onload = () => {
-  console.log('Window onload');
+  console.log('Loading game...');
   const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -37,36 +36,13 @@ window.onload = () => {
         }
       ]
     }
-  };const game = new Phaser.Game(config);
+  };const game = new Phaser.Game(config); let player, bullets, joystick, fireButton; let lastFireTime = 0;
 
-let player, bullets, joystick, fireButton; let lastFireTime = 0;
+function preload() { console.log('Preload'); const g = this.make.graphics({ add: false }); // Player g.fillStyle(0x00ff00, 1); g.fillCircle(16, 16, 16); g.generateTexture('playerCircle', 32, 32); // Bullet g.clear(); g.fillStyle(0xffffff, 1); g.fillRect(0, 0, 16, 4); g.generateTexture('bulletRect', 16, 4); // Fire button g.clear(); g.fillStyle(0xff0000, 1); g.fillCircle(30, 30, 30); g.generateTexture('fireButton', 60, 60); }
 
-function preload() { console.log('Preload'); const g = this.make.graphics({ add: false });
+function create() { console.log('Create'); // Center player const cx = this.scale.width / 2; const cy = this.scale.height / 2; player = this.physics.add.sprite(cx, cy, 'playerCircle'); player.setCollideWorldBounds(true); bullets = this.physics.add.group({ defaultKey: 'bulletRect', maxSize: 20 });
 
-g.fillStyle(0x00ff00, 1);
-g.fillCircle(16, 16, 16);
-g.generateTexture('playerCircle', 32, 32);
-
-g.clear();
-g.fillStyle(0xffffff, 1);
-g.fillRect(0, 0, 16, 4);
-g.generateTexture('bulletRect', 16, 4);
-
-g.clear();
-g.fillStyle(0xff0000, 1);
-g.fillCircle(30, 30, 30);
-g.generateTexture('fireButton', 60, 60);
-
-}
-
-function create() { console.log('Create'); const centerX = this.scale.width / 2; const centerY = this.scale.height / 2;
-
-player = this.physics.add.sprite(centerX, centerY, 'playerCircle');
-player.setCollideWorldBounds(true);
-
-bullets = this.physics.add.group({ defaultKey: 'bulletRect', maxSize: 20 });
-
-// Joystick setup using Rex Plugin
+// Joystick
 joystick = this.rexVirtualJoystick.add(this, {
   x: 100,
   y: this.scale.height - 100,
@@ -75,20 +51,29 @@ joystick = this.rexVirtualJoystick.add(this, {
   thumb: this.add.circle(0, 0, 25, 0xcccccc, 0.8),
 });
 
-// Fire Button
+// Fire button
 fireButton = this.add.image(this.scale.width - 100, this.scale.height - 100, 'fireButton')
   .setInteractive()
   .setScrollFactor(0)
-  .setDepth(1)
   .setAlpha(0.8);
-
 fireButton.on('pointerdown', () => shoot.call(this));
 
 }
 
-function update(time) { //console.log('Update'); // Movement via joystick const force = joystick.force; if (force > 0) { const angle = Phaser.Math.DegToRad(joystick.angle); this.physics.velocityFromRotation(angle, force * 200, player.body.velocity); player.rotation = angle; } else { player.setVelocity(0); }
+function update(time) { // Movement from joystick const cursor = joystick.createCursorKeys(); const speed = 200; let vx = 0, vy = 0; if (cursor.left.isDown) vx = -1; else if (cursor.right.isDown) vx = 1; if (cursor.up.isDown) vy = -1; else if (cursor.down.isDown) vy = 1;
 
-// Clean up bullets
+if (vx !== 0 || vy !== 0) {
+  // normalize
+  const mag = Math.sqrt(vx * vx + vy * vy);
+  vx /= mag;
+  vy /= mag;
+  player.setVelocity(vx * speed, vy * speed);
+  player.rotation = Math.atan2(vy, vx);
+} else {
+  player.setVelocity(0);
+}
+
+// Bullet cleanup
 bullets.children.each(bullet => {
   if (bullet.active && (bullet.x < 0 || bullet.x > this.scale.width || bullet.y < 0 || bullet.y > this.scale.height)) {
     bullets.killAndHide(bullet);
@@ -98,19 +83,9 @@ bullets.children.each(bullet => {
 
 }
 
-function shoot() { const now = this.time.now; if (now - lastFireTime < 200) return; // Limit fire rate lastFireTime = now;
+function shoot() { const now = this.time.now; if (now - lastFireTime < 200) return; lastFireTime = now; const bullet = bullets.get(player.x, player.y); if (bullet) { bullet.setActive(true).setVisible(true); bullet.body.enable = true; bullet.setRotation(player.rotation); this.physics.velocityFromRotation(player.rotation, 500, bullet.body.velocity); } }
 
-const bullet = bullets.get(player.x, player.y);
-if (bullet) {
-  bullet.setActive(true).setVisible(true);
-  bullet.body.enable = true;
-  bullet.setRotation(player.rotation);
-  this.physics.velocityFromRotation(player.rotation, 500, bullet.body.velocity);
-}
-
-}
-
-window.addEventListener('resize', () => { console.log('Resize'); game.scale.resize(window.innerWidth, window.innerHeight); }); }; </script>
+// Resize handling window.addEventListener('resize', () => { console.log('Resize'); game.scale.resize(window.innerWidth, window.innerHeight); }); }; </script>
 
 </body>
 </html>
