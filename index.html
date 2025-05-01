@@ -4,6 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini Royale Prototype</title>
   <style>body { margin: 0; overflow: hidden; }</style>
+  <!-- Phaser 3 -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
 </head>
 <body>
@@ -14,31 +15,30 @@ window.onload = () => {
     width: window.innerWidth,
     height: window.innerHeight,
     backgroundColor: '#2d2d2d',
-    scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH
-    },
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     physics: { default: 'arcade', arcade: { debug: false } },
     scene: { preload, create, update }
-  };
-  const game = new Phaser.Game(config);let player, bullets, fireButton; // Joystick state const joystick = { baseX: 100, baseY: window.innerHeight - 100, radius: 60, pointerId: null, isActive: false, vectorX: 0, vectorY: 0, baseImg: null, thumbImg: null };
+  };const game = new Phaser.Game(config); let player, bullets, fireButton; const joystick = { active: false, pointerId: null, baseX: 100, baseY: window.innerHeight - 100, radius: 60, vector: { x: 0, y: 0 }, baseImg: null, thumbImg: null };
 
-function preload() { const g = this.make.graphics({ add: false }); // Player circle g.fillStyle(0x00ff00, 1).fillCircle(16, 16, 16); g.generateTexture('playerCircle', 32, 32); // Bullet rect g.clear().fillStyle(0xffffff, 1).fillRect(0, 0, 16, 4); g.generateTexture('bulletRect', 16, 4); // Fire button g.clear().fillStyle(0xff0000, 1).fillCircle(30, 30, 30); g.generateTexture('fireButton', 60, 60); // Joystick base & thumb g.clear().fillStyle(0x888888, 0.5).fillCircle(0, 0, joystick.radius); g.generateTexture('joyBase', joystick.radius2, joystick.radius2); g.clear().fillStyle(0xcccccc, 0.8).fillCircle(0, 0, joystick.radius/2); g.generateTexture('joyThumb', joystick.radius, joystick.radius); }
+function preload() { const g = this.make.graphics({ add: false }); // Player g.fillStyle(0x00ff00, 1).fillCircle(16, 16, 16); g.generateTexture('player', 32, 32); // Bullet g.clear().fillStyle(0xffffff, 1).fillRect(0, 0, 16, 4); g.generateTexture('bullet', 16, 4); // Fire button g.clear().fillStyle(0xff0000, 1).fillCircle(30, 30, 30); g.generateTexture('fire', 60, 60); // Joystick base g.clear().fillStyle(0x888888, 0.5).fillCircle(60, 60, 60); g.generateTexture('joyBase', 120, 120); // Joystick thumb g.clear().fillStyle(0xcccccc, 0.8).fillCircle(30, 30, 30); g.generateTexture('joyThumb', 60, 60); }
 
-function create() { // Player player = this.physics.add.sprite(this.scale.width/2, this.scale.height/2, 'playerCircle').setCollideWorldBounds(true); // Bullets bullets = this.physics.add.group({ defaultKey: 'bulletRect', maxSize: 20 }); // Fire button fireButton = this.add.image(this.scale.width - 100, this.scale.height - 100, 'fireButton').setInteractive().setScrollFactor(0); fireButton.on('pointerdown', () => shoot.call(this)); // Joystick visuals joystick.baseImg = this.add.image(joystick.baseX, joystick.baseY, 'joyBase').setScrollFactor(0).setDepth(1); joystick.thumbImg = this.add.image(joystick.baseX, joystick.baseY, 'joyThumb').setScrollFactor(0).setDepth(2);
+function create() { const w = this.scale.width; const h = this.scale.height; // Player player = this.physics.add.sprite(w / 2, h / 2, 'player').setCollideWorldBounds(true); // Bullets bullets = this.physics.add.group({ defaultKey: 'bullet', maxSize: 20 }); // Fire button fireButton = this.add.image(w - 100, h - 100, 'fire').setInteractive().setScrollFactor(0); fireButton.on('pointerdown', () => shoot.call(this)); // Joystick visuals joystick.baseX = 100; joystick.baseY = h - 100; joystick.baseImg = this.add.image(joystick.baseX, joystick.baseY, 'joyBase').setScrollFactor(0).setDepth(1); joystick.thumbImg = this.add.image(joystick.baseX, joystick.baseY, 'joyThumb').setScrollFactor(0).setDepth(2);
 
 // Input handlers
 this.input.on('pointerdown', (pointer) => {
-  // Only start if left half
-  if (pointer.x < this.scale.width / 2 && joystick.pointerId === null) {
+  if (pointer.x < w / 2 && joystick.pointerId === null) {
+    // Start joystick
     joystick.pointerId = pointer.id;
-    joystick.isActive = true;
+    joystick.active = true;
     updateJoystick(pointer);
+  } else if (pointer.x >= w / 2) {
+    // Fire
+    shoot.call(this);
   }
 });
 
 this.input.on('pointermove', (pointer) => {
-  if (joystick.isActive && pointer.id === joystick.pointerId) {
+  if (joystick.active && pointer.id === joystick.pointerId) {
     updateJoystick(pointer);
   }
 });
@@ -46,29 +46,30 @@ this.input.on('pointermove', (pointer) => {
 this.input.on('pointerup', (pointer) => {
   if (pointer.id === joystick.pointerId) {
     joystick.pointerId = null;
-    joystick.isActive = false;
-    joystick.vectorX = 0;
-    joystick.vectorY = 0;
+    joystick.active = false;
+    joystick.vector.x = 0;
+    joystick.vector.y = 0;
     joystick.thumbImg.setPosition(joystick.baseX, joystick.baseY);
   }
 });
 
-// Handle resize
+// Resize handling
 window.addEventListener('resize', () => {
   game.scale.resize(window.innerWidth, window.innerHeight);
-  joystick.baseY = window.innerHeight - 100;
+  const newH = game.scale.height;
+  joystick.baseY = newH - 100;
   joystick.baseImg.setPosition(joystick.baseX, joystick.baseY);
   joystick.thumbImg.setPosition(joystick.baseX, joystick.baseY);
-  fireButton.setPosition(this.scale.width - 100, this.scale.height - 100);
+  fireButton.setPosition(game.scale.width - 100, newH - 100);
 });
 
 }
 
-function updateJoystick(pointer) { const dx = pointer.x - joystick.baseX; const dy = pointer.y - joystick.baseY; const dist = Math.sqrt(dxdx + dydy); const max = joystick.radius; let nx = dx; let ny = dy; if (dist > max) { nx = dx / dist * max; ny = dy / dist * max; } joystick.thumbImg.setPosition(joystick.baseX + nx, joystick.baseY + ny); joystick.vectorX = nx / max; joystick.vectorY = ny / max; }
+function update(handlerTime, delta) { const speed = 200; if (joystick.active) { player.setVelocity(joystick.vector.x * speed, joystick.vector.y * speed); if (joystick.vector.x !== 0 || joystick.vector.y !== 0) { player.rotation = Math.atan2(joystick.vector.y, joystick.vector.x); } } else { player.setVelocity(0, 0); } // Cleanup bullets bullets.children.each((b) => { if (b.active && (b.x < 0 || b.x > this.scale.width || b.y < 0 || b.y > this.scale.height)) { bullets.killAndHide(b); b.body.enable = false; } }); }
 
-function update() { const speed = 200; if (joystick.isActive) { player.setVelocity(joystick.vectorX * speed, joystick.vectorY * speed); if (joystick.vectorX !== 0 || joystick.vectorY !== 0) { player.rotation = Math.atan2(joystick.vectorY, joystick.vectorX); } } else { player.setVelocity(0); } // Bullets cleanup bullets.children.each(b => { if (b.active && (b.x < 0 || b.x > this.scale.width || b.y < 0 || b.y > this.scale.height)) { bullets.killAndHide(b); b.body.enable = false; } }, this); }
+function shoot() { const bullet = bullets.get(player.x, player.y); if (bullet) { bullet.setActive(true).setVisible(true); bullet.body.enable = true; bullet.setRotation(player.rotation); this.physics.velocityFromRotation(player.rotation, 500, bullet.body.velocity); } }
 
-function shoot() { const bullet = bullets.get(player.x, player.y); if (bullet) { bullet.setActive(true).setVisible(true); bullet.body.enable = true; bullet.setRotation(player.rotation); this.physics.velocityFromRotation(player.rotation, 500, bullet.body.velocity); } } }; </script>
+function updateJoystick(pointer) { const dx = pointer.x - joystick.baseX; const dy = pointer.y - joystick.baseY; const dist = Math.sqrt(dx * dx + dy * dy); const max = joystick.radius; let nx = dx; let ny = dy; if (dist > max) { nx = (dx / dist) * max; ny = (dy / dist) * max; } joystick.thumbImg.setPosition(joystick.baseX + nx, joystick.baseY + ny); joystick.vector.x = nx / max; joystick.vector.y = ny / max; } }; </script>
 
 </body>
 </html>
