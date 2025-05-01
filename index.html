@@ -4,12 +4,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mini Royale with Joystick and Fire Button</title>
   <style>body { margin: 0; overflow: hidden; }</style>
+  <!-- Phaser 3 -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins/templates/virtualjoystick/virtualjoystick-plugin.min.js"></script>
+  <!-- Rex Virtual Joystick Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins/dist/rexvirtualjoystickplugin.min.js"></script>
 </head>
 <body>
 <script>
+console.log('Loading game...');
 window.onload = () => {
+  console.log('Window onload');
   const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -25,17 +29,19 @@ window.onload = () => {
     },
     scene: { preload, create, update },
     plugins: {
-      scene: [{
-        key: 'rexVirtualJoystick',
-        plugin: rexvirtualjoystickplugin,
-        mapping: 'rexVirtualJoystick'
-      }]
+      scene: [
+        {
+          key: 'rexVirtualJoystick',
+          plugin: rexvirtualjoystickplugin,
+          mapping: 'rexVirtualJoystick'
+        }
+      ]
     }
   };const game = new Phaser.Game(config);
 
 let player, bullets, joystick, fireButton; let lastFireTime = 0;
 
-function preload() { const g = this.make.graphics({ add: false });
+function preload() { console.log('Preload'); const g = this.make.graphics({ add: false });
 
 g.fillStyle(0x00ff00, 1);
 g.fillCircle(16, 16, 16);
@@ -53,7 +59,7 @@ g.generateTexture('fireButton', 60, 60);
 
 }
 
-function create() { const centerX = this.scale.width / 2; const centerY = this.scale.height / 2;
+function create() { console.log('Create'); const centerX = this.scale.width / 2; const centerY = this.scale.height / 2;
 
 player = this.physics.add.sprite(centerX, centerY, 'playerCircle');
 player.setCollideWorldBounds(true);
@@ -80,24 +86,9 @@ fireButton.on('pointerdown', () => shoot.call(this));
 
 }
 
-function update(time) { const cursorKeys = joystick.createCursorKeys(); const speed = 200;
+function update(time) { //console.log('Update'); // Movement via joystick const force = joystick.force; if (force > 0) { const angle = Phaser.Math.DegToRad(joystick.angle); this.physics.velocityFromRotation(angle, force * 200, player.body.velocity); player.rotation = angle; } else { player.setVelocity(0); }
 
-let vx = 0, vy = 0;
-if (cursorKeys.left.isDown) vx = -1;
-if (cursorKeys.right.isDown) vx = 1;
-if (cursorKeys.up.isDown) vy = -1;
-if (cursorKeys.down.isDown) vy = 1;
-
-const mag = Math.sqrt(vx * vx + vy * vy);
-if (mag > 0) {
-  vx /= mag;
-  vy /= mag;
-  player.setVelocity(vx * speed, vy * speed);
-  player.rotation = Phaser.Math.Angle.Between(0, 0, vx, vy);
-} else {
-  player.setVelocity(0);
-}
-
+// Clean up bullets
 bullets.children.each(bullet => {
   if (bullet.active && (bullet.x < 0 || bullet.x > this.scale.width || bullet.y < 0 || bullet.y > this.scale.height)) {
     bullets.killAndHide(bullet);
@@ -119,7 +110,7 @@ if (bullet) {
 
 }
 
-window.addEventListener('resize', () => { game.scale.resize(window.innerWidth, window.innerHeight); }); }; </script>
+window.addEventListener('resize', () => { console.log('Resize'); game.scale.resize(window.innerWidth, window.innerHeight); }); }; </script>
 
 </body>
 </html>
