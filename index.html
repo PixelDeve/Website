@@ -34,5 +34,55 @@ window.onload = () => {
     // Player circle
     g.fillStyle(0x00ff00, 1);
     g.fillCircle(16, 16, 16);
-    </body>
+    g.generateTexture('playerCircle', 32, 32);
+
+    // Bullet rectangle
+    g.clear();
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(0, 0, 16, 4);
+    g.generateTexture('bulletRect', 16, 4);
+  }
+
+  function create() {
+    player = this.physics.add.sprite(400, 300, 'playerCircle');
+    player.setCollideWorldBounds(true);
+
+    bullets = this.physics.add.group({ defaultKey: 'bulletRect', maxSize: 20 });
+
+    cursors = this.input.keyboard.createCursorKeys();
+    this.input.keyboard.on('keydown-SPACE', () => shoot.call(this));
+  }
+
+  function update(time, delta) {
+    const speed = 200;
+    player.setVelocity(0);
+
+    if (cursors.left.isDown) player.setVelocityX(-speed);
+    if (cursors.right.isDown) player.setVelocityX(speed);
+    if (cursors.up.isDown) player.setVelocityY(-speed);
+    if (cursors.down.isDown) player.setVelocityY(speed);
+
+    player.rotation = Phaser.Math.Angle.Between(player.x, player.y, this.input.activePointer.worldX, this.input.activePointer.worldY);
+
+    bullets.children.each(bullet => {
+      if (bullet.active && (bullet.x < 0 || bullet.x > 800 || bullet.y < 0 || bullet.y > 600)) {
+        bullets.killAndHide(bullet);
+        bullet.body.enable = false;
+      }
+    }, this);
+  }
+
+  function shoot() {
+    const bullet = bullets.get(player.x, player.y);
+    if (bullet) {
+      bullet.setActive(true).setVisible(true);
+      bullet.body.enable = true;
+      bullet.setRotation(player.rotation);
+
+      this.physics.velocityFromRotation(player.rotation, 500, bullet.body.velocity);
+    }
+  }
+};
+</script>
+</body>
 </html>
