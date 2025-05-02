@@ -1,67 +1,244 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chat App with Google Auth & Firestore</title>
   <style>
-    /* RESET & BASE */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* VARIABLES */
+    :root {
+      --primary: #128c7e;
+      --accent: #25d366;
+      --bg-light: #f0f2f5;
+      --bg-main: #e5ddd5;
+      --text-primary: #202124;
+      --text-secondary: #666;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+    }
+
+    /* RESET */
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
     html, body { height: 100%; }
-    body { font-family: sans-serif; background: #e5ddd5; overflow: hidden; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      overflow: hidden;
+    }
     ul { list-style: none; }
-    button { background: none; border: none; cursor: pointer; }/* LOGIN SCREEN */
-#login { display: flex; justify-content: center; align-items: center; height: 100%; }
-#login button { padding: .75rem 1.5rem; font-size: 1rem; background: #4285F4; color: #fff; border-radius: .5rem; }
+    button { border: none; background: none; cursor: pointer; }
 
-/* APP LAYOUT */
-#app { display: flex; height: 100%; }
-#sidebar { width: 30%; background: #f0f2f5; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
-#main    { flex: 1; display: flex; flex-direction: column; }
+    /* LOGIN SCREEN */
+    #login {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    #login button {
+      background: #4285f4;
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 8px var(--shadow);
+      font-size: 1rem;
+      transition: background .2s ease;
+    }
+    #login button:hover { background: #3367d6; }
 
-/* SIDEBAR */
-#sidebar header { padding: 1rem; display: flex; align-items: center; gap: .5rem; }
-#sidebar header input { flex: 1; padding: .5rem; border-radius: 1rem; border: 1px solid #ccc; }
-#sidebar header button.search-clear { font-size: 1.2rem; }
-#users-list { flex: 1; overflow-y: auto; }
-.user-item { display: flex; align-items: center; padding: .75rem; cursor: pointer; transition: background .2s; }
-.user-item:hover, .user-item.active { background: #e6e6e6; }
-.user-item img { width: 40px; height: 40px; border-radius: 50%; margin-right: .75rem; }
-.user-item .name { font-size: 1rem; }
+    /* APP LAYOUT */
+    #app {
+      display: flex;
+      height: 100%;
+    }
+    #sidebar {
+      width: 30%;
+      background: var(--bg-light);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #ddd;
+      box-shadow: 2px 0 6px var(--shadow);
+    }
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
 
-/* MAIN CHAT */
-#main header { padding: 1rem; background: #f0f2f5; display: flex; align-items: center; border-bottom: 1px solid #ddd; }
-#main header img { width: 40px; height: 40px; border-radius: 50%; margin-right: .75rem; }
-#main header .info { display: flex; flex-direction: column; }
-#main header .info .name { font-size: 1.1rem; }
-#main header .info .status { font-size: .9rem; color: #666; }
-#chat-body { flex: 1; padding: 1rem; background: #e5ddd5; overflow-y: auto; }
-.msg { max-width: 70%; margin-bottom: 1rem; padding: .75rem; border-radius: .5rem; position: relative; word-wrap: break-word; }
-.msg.sent { background: #dcf8c6; margin-left: auto; }
-.msg.recv { background: #fff; margin-right: auto; }
-.msg .ts { font-size: .7rem; color: #999; position: absolute; bottom: -1.2rem; right: .5rem; }
-#main footer { padding: .5rem 1rem; display: flex; align-items: center; gap: .5rem; background: #f0f2f5; border-top: 1px solid #ddd; }
-#main footer input { flex: 1; padding: .75rem; border-radius: 1rem; border: 1px solid #ccc; font-size: .95rem; }
-#main footer button.send { padding: .5rem 1rem; border-radius: 1rem; background: #128c7e; color: #fff; font-size: 1rem; }
+    /* SIDEBAR HEADER */
+    #sidebar header {
+      padding: 1rem;
+      display: flex;
+      gap: .5rem;
+      background: #fff;
+      box-shadow: 0 2px 4px var(--shadow);
+    }
+    #sidebar header input {
+      flex: 1;
+      padding: .5rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: var(--radius);
+      font-size: .95rem;
+    }
+    #sidebar header button.search-clear {
+      font-size: 1.2rem;
+      line-height: 1;
+      color: var(--text-secondary);
+    }
 
-/* SIGN OUT */
-#signOut { position: absolute; top: .5rem; right: .5rem; padding: .5rem; color: #f44336; }
+    /* USER LIST */
+    #users-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .user-item {
+      display: flex;
+      align-items: center;
+      padding: .75rem 1rem;
+      gap: .75rem;
+      cursor: pointer;
+      transition: background .2s ease;
+    }
+    .user-item:hover,
+    .user-item.active {
+      background: #e6e6e6;
+    }
+    .user-item img {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .user-item .name {
+      font-size: 1rem;
+    }
 
-/* RESPONSIVE */
-@media(max-width: 768px) {
-  #app { flex-direction: column; }
-  #sidebar { width: 100%; height: 35%; border-right: none; border-bottom: 1px solid #ddd; }
-  #main    { height: 65%; }
-  #signOut { top: .25rem; right: .25rem; }
-}
+    /* MAIN CHAT HEADER */
+    #main header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: 1rem;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      box-shadow: 0 2px 4px var(--shadow);
+    }
+    #main header img {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    #main header .info .name {
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    #main header .info .status {
+      font-size: .85rem;
+      color: var(--text-secondary);
+    }
 
+    /* CHAT BODY */
+    #chat-body {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      background: var(--bg-main);
+    }
+    .msg {
+      display: inline-block;
+      max-width: 70%;
+      margin-bottom: 1rem;
+      padding: .75rem 1rem;
+      border-radius: var(--radius);
+      position: relative;
+      word-wrap: break-word;
+      box-shadow: 0 1px 3px var(--shadow);
+    }
+    .msg.sent {
+      background: #dcf8c6;
+      margin-left: auto;
+    }
+    .msg.recv {
+      background: #fff;
+      margin-right: auto;
+    }
+    .msg .ts {
+      font-size: .7rem;
+      color: #999;
+      position: absolute;
+      bottom: -1.2rem;
+      right: .5rem;
+    }
+
+    /* CHAT INPUT FOOTER */
+    #main footer {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .75rem 1rem;
+      background: var(--bg-light);
+      border-top: 1px solid #ddd;
+      box-shadow: 0 -2px 4px var(--shadow);
+    }
+    #main footer input {
+      flex: 1;
+      padding: .75rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: var(--radius);
+      font-size: .95rem;
+    }
+    #main footer button.send {
+      background: var(--primary);
+      color: #fff;
+      padding: .5rem 1rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      box-shadow: 0 2px 4px var(--shadow);
+      transition: background .2s ease;
+    }
+    #main footer button.send:hover {
+      background: var(--accent);
+    }
+
+    /* SIGN OUT */
+    #signOut {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: .5rem;
+      color: #f44336;
+      font-weight: bold;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      #app { flex-direction: column; }
+      #sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+      }
+      #main { height: auto; flex: 1; }
+      #signOut {
+        top: .5rem; right: .5rem;
+      }
+    }
   </style>
 </head>
 <body>
+
   <!-- LOGIN -->
   <div id="login">
     <button id="loginBtn">Sign in with Google</button>
-  </div>  <!-- APP -->  <div id="app" style="display:none;">
+  </div>
+
+  <!-- APP -->
+  <div id="app" style="display: none;">
     <button id="signOut">Sign Out</button>
+
     <div id="sidebar">
       <header>
         <input id="search" placeholder="Search users…" />
@@ -69,6 +246,7 @@
       </header>
       <ul id="users-list"></ul>
     </div>
+
     <div id="main">
       <header>
         <img id="chatAvatar" src="" alt="avatar" />
@@ -83,8 +261,9 @@
         <button class="send" id="sendBtn">Send</button>
       </footer>
     </div>
-  </div>  <script type="module">
-    // Imports
+  </div>
+
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAnalytics }  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
     import {
@@ -108,7 +287,6 @@
       getDocs
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",
       authDomain: "pichat-b1206.firebaseapp.com",
@@ -118,14 +296,12 @@
       appId: "1:844622847426:web:d76521621977b1d1074a5b",
       measurementId: "G-20QPP0S27J"
     };
-    // Init
     const app       = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
     const auth      = getAuth(app);
     const db        = getFirestore(app);
     const provider  = new GoogleAuthProvider();
 
-    // DOM
     const loginDiv   = document.getElementById('login');
     const loginBtn   = document.getElementById('loginBtn');
     const appDiv     = document.getElementById('app');
@@ -142,13 +318,11 @@
 
     let currentUser, activeUser, unsubMsgs;
 
-    // Auth state
     onAuthStateChanged(auth, user => {
       if (user) {
         currentUser = user;
         loginDiv.style.display = 'none';
         appDiv.style.display   = 'flex';
-        // save user
         setDoc(doc(db, 'users', user.uid), {
           uid: user.uid,
           name: user.displayName,
@@ -161,77 +335,76 @@
       }
     });
 
-    // Handle redirect result
     getRedirectResult(auth).catch(console.error);
-
-    // Login
     loginBtn.addEventListener('click', () => signInWithRedirect(auth, provider));
     signOutBtn.addEventListener('click', () => signOut(auth));
 
-    // Load & render users
     async function loadUsers() {
       const snap = await getDocs(collection(db, 'users'));
       renderUsers(snap.docs.map(d => d.data()));
     }
     function renderUsers(arr) {
       usersList.innerHTML = '';
-      arr.filter(u => u.uid !== currentUser.uid)
+      arr
+        .filter(u => u.uid !== currentUser.uid)
         .filter(u => u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase()))
         .forEach(u => {
           const li = document.createElement('li');
-          li.className = 'user-item' + (activeUser?.uid===u.uid?' active':'');
+          li.className = 'user-item' + (activeUser?.uid === u.uid ? ' active' : '');
           li.innerHTML = `<img src="${u.avatar}" alt=""/><div class="name">${u.name}</div>`;
           li.onclick = () => selectUser(u);
           usersList.append(li);
         });
     }
 
-    searchIn.addEventListener('input', () => loadUsers());
-    clearBtn.addEventListener('click', () => { searchIn.value=''; loadUsers(); });
+    searchIn.addEventListener('input', loadUsers);
+    clearBtn.addEventListener('click', () => {
+      searchIn.value = '';
+      loadUsers();
+    });
 
-    // Select user & load chat
     function selectUser(u) {
       activeUser = u;
       chatNameEl.textContent = u.name;
       chatStatEl.textContent = 'online';
       chatAvatar.src = u.avatar;
       chatBody.innerHTML = '';
-      if (unsubMsgs) unsubMsgs();
-      const ids = [currentUser.uid,u.uid].sort();
-      const chatRef = collection(db,'chats',ids.join('_'),'messages');
+      unsubMsgs && unsubMsgs();
+      const ids = [currentUser.uid, u.uid].sort();
+      const chatRef = collection(db,'chats', ids.join('_'),'messages');
       const q = query(chatRef, orderBy('timestamp'));
       unsubMsgs = onSnapshot(q, snap => {
         chatBody.innerHTML = '';
         snap.docs.forEach(doc => appendMsg(doc.data()));
       });
-      renderUsers([...usersList.querySelectorAll('.user-item')].map(li=>({}))); // refresh highlight
+      renderUsers([...usersList.querySelectorAll('.user-item')].map(li=>({})));
     }
 
-    // Append message
     function appendMsg(msg) {
-      const d = document.createElement('div');
-      d.className = 'msg ' + (msg.sender===currentUser.uid?'sent':'recv');
-      d.textContent = msg.text;
+      const div = document.createElement('div');
+      div.className = 'msg ' + (msg.sender === currentUser.uid ? 'sent' : 'recv');
+      div.textContent = msg.text;
       const t = document.createElement('div');
-      t.className='ts';
-      t.textContent = msg.timestamp?.toDate?msg.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'';
-      d.append(t);
-      chatBody.append(d);
+      t.className = 'ts';
+      t.textContent = msg.timestamp?.toDate
+        ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : '';
+      div.append(t);
+      chatBody.append(div);
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
-    // Send message
-    sendBtnEl.addEventListener('click', async ()=>{
+    sendBtnEl.addEventListener('click', async () => {
       const txt = msgIn.value.trim();
-      if (!txt||!activeUser) return;
-      const ids = [currentUser.uid,activeUser.uid].sort();
-      await addDoc(collection(db,'chats',ids.join('_'),'messages'),{
+      if (!txt || !activeUser) return;
+      const ids = [currentUser.uid, activeUser.uid].sort();
+      await addDoc(collection(db,'chats', ids.join('_'),'messages'), {
         sender: currentUser.uid,
         text: txt,
         timestamp: serverTimestamp()
       });
       msgIn.value = '';
     });
-
-  </script></body>
+  </script>
+</body>
 </html>
