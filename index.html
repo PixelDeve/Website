@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minimal Minecraft-like Voxel World</title>
+  <title>Minecraft Clone</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; overflow: hidden; background: #000; }
+    canvas { display: block; }
     #instructions {
       position: absolute;
-      top: 50%; width: 100%; text-align: center;
-      color: white; font-family: sans-serif;
-      user-select: none;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      text-align: center; color: white;
+      font-family: sans-serif;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 1em; border-radius: 10px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -22,47 +26,45 @@
 
     let camera, scene, renderer, controls;
     const objects = [];
-    const worldSize = 50;
-    const maxHeight = 5;
+    const worldSize = 20;
+    const maxHeight = 4;
 
     init();
     animate();
 
     function init() {
-      // Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer();
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      // Scene & Camera
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x87ceeb);
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-      // Lights
-      const light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.set(1, 1, 0.5).normalize();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.y = 10;
+
+      const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+      light.position.set(0, 200, 0);
       scene.add(light);
 
-      // Controls
       controls = new PointerLockControls(camera, document.body);
-      document.getElementById('instructions').addEventListener('click', () => {
-        controls.lock();
-      });
-      controls.addEventListener('lock', () => document.getElementById('instructions').style.display = 'none');
-      controls.addEventListener('unlock', () => document.getElementById('instructions').style.display = 'block');
+      const blocker = document.getElementById('instructions');
+
+      blocker.addEventListener('click', () => controls.lock());
+      controls.addEventListener('lock', () => blocker.style.display = 'none');
+      controls.addEventListener('unlock', () => blocker.style.display = 'block');
+
       scene.add(controls.getObject());
 
-      // World generation (random heights)
-      const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+      // Ground generation
+      const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
       for (let x = -worldSize/2; x < worldSize/2; x++) {
         for (let z = -worldSize/2; z < worldSize/2; z++) {
-          const h = Math.floor(Math.random() * maxHeight) + 1;
-          for (let y = 0; y < h; y++) {
-            const isTop = (y === h - 1);
-            const color = isTop ? 0x00aa00 : 0x8B4513;
-            const mat = new THREE.MeshLambertMaterial({ color });
-            const cube = new THREE.Mesh(boxGeo, mat);
+          const height = Math.floor(Math.random() * maxHeight) + 1;
+          for (let y = 0; y < height; y++) {
+            const color = y === height - 1 ? 0x00aa00 : 0x8B4513;
+            const material = new THREE.MeshLambertMaterial({ color });
+            const cube = new THREE.Mesh(boxGeometry, material);
             cube.position.set(x, y, z);
             scene.add(cube);
             objects.push(cube);
@@ -70,37 +72,29 @@
         }
       }
 
-      // Floor boundary
-      const floorGeo = new THREE.PlaneGeometry(worldSize, worldSize);
-      const floorMat = new THREE.MeshPhongMaterial({ color: 0x228B22 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.y = -0.5;
-      scene.add(floor);
-
-      // Movement parameters
-      const move = { forward: false, back: false, left: false, right: false };
+      // Controls movement
+      const move = { forward: false, backward: false, left: false, right: false };
       const velocity = new THREE.Vector3();
       const direction = new THREE.Vector3();
 
-      document.addEventListener('keydown', (e) => {
-        switch (e.code) {
+      document.addEventListener('keydown', (event) => {
+        switch (event.code) {
           case 'KeyW': move.forward = true; break;
-          case 'KeyS': move.back = true; break;
+          case 'KeyS': move.backward = true; break;
           case 'KeyA': move.left = true; break;
           case 'KeyD': move.right = true; break;
         }
       });
-      document.addEventListener('keyup', (e) => {
-        switch (e.code) {
+
+      document.addEventListener('keyup', (event) => {
+        switch (event.code) {
           case 'KeyW': move.forward = false; break;
-          case 'KeyS': move.back = false; break;
+          case 'KeyS': move.backward = false; break;
           case 'KeyA': move.left = false; break;
           case 'KeyD': move.right = false; break;
         }
       });
 
-      // Animation loop
       function animate() {
         requestAnimationFrame(animate);
 
@@ -108,28 +102,24 @@
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
 
-        direction.z = Number(move.forward) - Number(move.back);
+        direction.z = Number(move.forward) - Number(move.backward);
         direction.x = Number(move.right) - Number(move.left);
         direction.normalize();
 
-        if (move.forward || move.back) velocity.z -= direction.z * 400.0 * delta;
+        if (move.forward || move.backward) velocity.z -= direction.z * 400.0 * delta;
         if (move.left || move.right) velocity.x -= direction.x * 400.0 * delta;
 
         controls.moveRight(-velocity.x * delta);
         controls.moveForward(-velocity.z * delta);
 
-        camera.position.y = camera.position.y; // prevent falling
-
         renderer.render(scene, camera);
       }
 
-      window.addEventListener('resize', onWindowResize);
-    }
-
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
     }
   </script>
 </body>
