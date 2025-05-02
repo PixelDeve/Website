@@ -1,448 +1,268 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Clone</title>
-    <style>
-        /* ===========================
-           RESET & BASE STYLES
-           =========================== */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #e5ddd5;
-            height: 100vh;
-            overflow: hidden;
-        }
-        ul { list-style: none; }
-        button { background: none; border: none; cursor: pointer; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WhatsApp Clone with Firebase</title>
+  <style>
+    /* === RESET & BASE === */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #e5ddd5; height: 100vh; overflow: hidden; }
+    ul { list-style: none; }
+    button { background: none; border: none; cursor: pointer; }
 
-        /* ===========================
-           LAYOUT
-           =========================== */
-        #app { display: flex; height: 100%; }
-        #contacts-panel { width: 32%; background: #f0f2f5; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
-        #chat-panel { flex: 1; display: flex; flex-direction: column; }
+    /* === LAYOUT === */
+    #app { display: flex; height: 100%; }
+    #contacts { width: 30%; background: #f0f2f5; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
+    #chat    { flex: 1; display: flex; flex-direction: column; }
 
-        /* ===========================
-           CONTACTS HEADER
-           =========================== */
-        #contacts-header {
-            padding: 1rem;
-            background: #ededed;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        #contacts-header h2 { font-size: 1.4rem; }
-        #new-chat-btn { font-size: 1.5rem; color: #128C7E; }
+    /* === CONTACTS HEADER === */
+    #contacts header { padding: 1rem; background: #ededed; display: flex; justify-content: space-between; align-items: center; }
+    #contacts header h2 { font-size: 1.4rem; }
+    #contacts header button { font-size: 1.5rem; color: #128C7E; }
 
-        /* ===========================
-           CONTACTS SEARCH
-           =========================== */
-        #contacts-search { margin: 0.5rem 1rem; position: relative; }
-        #contacts-search input {
-            width: 100%; padding: 0.5rem 2.5rem 0.5rem 0.75rem;
-            border: 1px solid #ccc; border-radius: 1rem;
-        }
-        #contacts-search .icon {
-            position: absolute; right: 1rem; top: 50%;
-            transform: translateY(-50%); font-size: 1.1rem; color: #888;
-        }
+    /* === CONTACTS SEARCH === */
+    #contacts .search { margin: 0.5rem 1rem; position: relative; }
+    #contacts .search input {
+      width: 100%; padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+      border-radius: 1rem; border: 1px solid #ccc;
+    }
+    #contacts .search .icon {
+      position: absolute; right: 1rem; top: 50%;
+      transform: translateY(-50%); font-size: 1.1rem; color: #888;
+    }
 
-        /* ===========================
-           CONTACTS LIST
-           =========================== */
-        #contacts-list { flex: 1; overflow-y: auto; }
-        .contact {
-            display: flex; align-items: center; padding: 0.75rem 1rem;
-            cursor: pointer; transition: background 0.2s;
-        }
-        .contact:hover, .contact.active { background: #e6e6e6; }
-        .contact img {
-            width: 48px; height: 48px; border-radius: 50%; margin-right: 0.75rem;
-        }
-        .contact .info h3 { font-size: 1rem; margin-bottom: 0.2rem; }
-        .contact .info p { font-size: 0.85rem; color: #666; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    /* === CONTACTS LIST === */
+    #contacts-list { flex: 1; overflow-y: auto; }
+    .contact {
+      display: flex; align-items: center; padding: 0.75rem 1rem;
+      cursor: pointer; transition: background .2s;
+    }
+    .contact:hover, .contact.active { background: #e6e6e6; }
+    .contact img { width: 48px; height: 48px; border-radius: 50%; margin-right: .75rem; }
+    .contact .info h3 { font-size: 1rem; margin-bottom: .2rem; }
+    .contact .info p  { font-size: .85rem; color: #666; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
-        /* ===========================
-           CHAT HEADER
-           =========================== */
-        #chat-header {
-            padding: 1rem; background: #f0f2f5;
-            display: flex; align-items: center; border-bottom: 1px solid #ddd;
-        }
-        #chat-header img {
-            width: 40px; height: 40px; border-radius: 50%; margin-right: 0.75rem;
-        }
-        #chat-header .info h3 { font-size: 1.1rem; }
-        #chat-header .info p { font-size: 0.9rem; color: #666; }
-        #chat-header .actions { margin-left: auto; display: flex; gap: 1rem; }
-        #chat-header .action { font-size: 1.2rem; color: #666; }
+    /* === CHAT HEADER === */
+    #chat header {
+      padding: 1rem; background: #f0f2f5; display: flex; align-items: center; border-bottom: 1px solid #ddd;
+    }
+    #chat header img { width: 40px; height: 40px; border-radius: 50%; margin-right: .75rem; }
+    #chat header .info h3 { font-size: 1.1rem; }
+    #chat header .info p  { font-size: .9rem; color: #666; }
+    #chat header .actions { margin-left: auto; display: flex; gap: 1rem; }
+    #chat header .actions button { font-size: 1.2rem; color: #666; }
 
-        /* ===========================
-           CHAT BODY
-           =========================== */
-        #chat-body {
-            flex: 1; padding: 1rem; overflow-y: auto; background: #e5ddd5;
-        }
-        .message {
-            max-width: 65%; margin-bottom: 1rem; padding: 0.75rem;
-            border-radius: 0.5rem; position: relative; word-wrap: break-word;
-            line-height: 1.3;
-        }
-        .message.sent { background: #dcf8c6; margin-left: auto; }
-        .message.received { background: #fff; margin-right: auto; }
-        .message .timestamp {
-            font-size: 0.7rem; color: #999;
-            position: absolute; bottom: -1.2rem; right: 0.5rem;
-        }
-        .message img {
-            max-width: 200px; border-radius: 0.5rem;
-            display: block; margin-bottom: 0.25rem;
-        }
+    /* === CHAT BODY === */
+    #chat-body {
+      flex: 1; padding: 1rem; overflow-y: auto; background: #e5ddd5;
+    }
+    .message {
+      max-width: 65%; margin-bottom: 1rem; padding: .75rem;
+      border-radius: .5rem; position: relative; word-wrap: break-word;
+      line-height: 1.3;
+    }
+    .sent     { background: #dcf8c6; margin-left: auto; }
+    .received { background: #fff; margin-right: auto; }
+    .message .timestamp {
+      font-size: .7rem; color: #999;
+      position: absolute; bottom: -1.2rem; right: .5rem;
+    }
 
-        /* ===========================
-           CHAT FOOTER
-           =========================== */
-        #chat-footer {
-            padding: 0.5rem 1rem; background: #f0f2f5;
-            display: flex; align-items: center; border-top: 1px solid #ddd;
-        }
-        #chat-input {
-            flex: 1; display: flex; align-items: center; gap: 0.5rem; position: relative;
-        }
-        #chat-input textarea {
-            width: 100%; padding: 0.75rem 2.5rem 0.75rem 0.75rem;
-            border: 1px solid #ccc; border-radius: 1rem; resize: none; height: 40px;
-            font-size: 0.95rem;
-        }
-        #chat-input .emoji-btn, #chat-input .attach-btn {
-            position: absolute; right: 2.5rem; font-size: 1.2rem; color: #666; cursor: pointer;
-        }
-        #chat-input .attach-btn { right: 1.5rem; }
-        #chat-send {
-            background: #128c7e; color: #fff; padding: 0.5rem 1rem;
-            border-radius: 1rem; font-size: 1rem; margin-left: 0.5rem;
-        }
+    /* === CHAT FOOTER === */
+    #chat footer {
+      padding: .5rem 1rem; background: #f0f2f5; display: flex; align-items: center; border-top: 1px solid #ddd;
+    }
+    #chat footer textarea {
+      flex: 1; padding: .75rem; border-radius: 1rem; border: 1px solid #ccc;
+      resize: none; height: 40px; font-size: .95rem;
+    }
+    #chat footer button.send {
+      background: #128c7e; color: #fff; border-radius: 1rem; padding: .5rem 1rem; font-size: 1rem; margin-left: .5rem;
+    }
 
-        /* ===========================
-           SCROLLBAR
-           =========================== */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
-
-        /* ===========================
-           EMOJI PICKER
-           =========================== */
-        #emoji-picker {
-            position: absolute; bottom: 60px; left: 20px; background: #fff;
-            border: 1px solid #ccc; padding: 0.5rem; display: grid;
-            grid-template-columns: repeat(8, 1fr); gap: 0.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border-radius: 0.5rem; z-index: 10;
-        }
-        #emoji-picker button {
-            font-size: 1.2rem; border: none; background: transparent; cursor: pointer;
-        }
-
-        /* ===========================
-           RESPONSIVE
-           =========================== */
-        @media (max-width: 768px) {
-            #contacts-panel { display: none; }
-            #app.single-chat #contacts-panel { display: none; }
-            #app.single-chat #chat-panel { flex: 1; }
-        }
-
-        /* ===========================
-           DARK MODE (toggle via JS)
-           =========================== */
-        body.dark {
-            background: #1e1e1e; color: #ddd;
-        }
-        body.dark #contacts-panel,
-        body.dark #chat-footer,
-        body.dark #chat-header,
-        body.dark #contacts-header {
-            background: #2a2a2a;
-            border-color: #444;
-        }
-        body.dark .contact:hover,
-        body.dark .contact.active {
-            background: #333;
-        }
-        body.dark .message.sent {
-            background: #056162;
-            color: #e5ddd5;
-        }
-        body.dark .message.received {
-            background: #262d31;
-            color: #ddd;
-        }
-        body.dark #chat-input textarea {
-            background: #3a3a3a; color: #ddd; border-color: #555;
-        }
-        body.dark #chat-send { background: #25d366; }
-
-        /* ===========================
-           ADDITIONAL CSS FOR PROFESSIONAL LOOK
-           * (Gradients, animations, media queries,
-           * custom themes, etc. — extends file length)
-           =========================== */
-
-        /* (Imagine ~200 more lines of refined CSS here) */
-    </style>
+    /* === SCROLLBAR === */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+  </style>
 </head>
 <body>
-    <div id="app">
-        <div id="contacts-panel">
-            <div id="contacts-header">
-                <h2>Chats</h2>
-                <button id="new-chat-btn">+</button>
-            </div>
-            <div id="contacts-search">
-                <input type="text" id="search-input" placeholder="Search contacts...">
-                <span class="icon">🔍</span>
-            </div>
-            <ul id="contacts-list"></ul>
-        </div>
-
-        <div id="chat-panel">
-            <div id="chat-header">
-                <img src="" alt="Avatar" id="chat-avatar">
-                <div class="info">
-                    <h3 id="chat-name">Select a chat</h3>
-                    <p id="chat-status">Status</p>
-                </div>
-                <div class="actions">
-                    <button class="action">📞</button>
-                    <button class="action">🎥</button>
-                    <button class="action">⋮</button>
-                </div>
-            </div>
-
-            <div id="chat-body"></div>
-
-            <div id="chat-footer">
-                <div id="chat-input">
-                    <button class="emoji-btn">😊</button>
-                    <textarea id="message-input" placeholder="Type a message"></textarea>
-                    <button class="attach-btn">📎
-                        <input type="file" id="file-input" style="display:none">
-                    </button>
-                </div>
-                <button id="chat-send">Send</button>
-            </div>
-        </div>
+  <div id="app">
+    <div id="contacts">
+      <header>
+        <h2>Chats</h2>
+        <button id="newChat">+</button>
+      </header>
+      <div class="search">
+        <input type="text" id="search" placeholder="Search contacts…">
+        <span class="icon">🔍</span>
+      </div>
+      <ul id="contacts-list"></ul>
     </div>
 
-    <script>
-    // ===========================
-    // DATA MODELS
-    // ===========================
-    class Contact {
-        constructor(id, name, avatar) {
-            this.id = id;
-            this.name = name;
-            this.avatar = avatar;
-            this.messages = [];
-            this.status = 'online';
-        }
-    }
+    <div id="chat">
+      <header>
+        <img src="" id="avatar" alt="">
+        <div class="info">
+          <h3 id="chatName">Select a chat</h3>
+          <p id="chatStatus">Status</p>
+        </div>
+        <div class="actions">
+          <button>📞</button>
+          <button>🎥</button>
+          <button>⋮</button>
+        </div>
+      </header>
 
-    class Message {
-        constructor(content, type = 'text', sender = 'me') {
-            this.content = content;
-            this.type = type; // 'text' or 'image'
-            this.sender = sender;
-            this.timestamp = new Date();
-        }
-    }
+      <div id="chat-body"></div>
 
-    // ===========================
-    // APPLICATION LOGIC
-    // ===========================
-    const App = {
-        contacts: [],
-        activeContact: null,
+      <footer>
+        <textarea id="messageInput" placeholder="Type a message"></textarea>
+        <button class="send" id="sendBtn">Send</button>
+      </footer>
+    </div>
+  </div>
 
-        init() {
-            this.cacheEls();
-            this.bindEvents();
-            this.setupThemeToggle();
-            this.loadDummyContacts();
-            this.renderContacts();
-        },
+  <script type="module">
+    // --- Firebase imports ---
+    import { initializeApp }     from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAnalytics }      from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        cacheEls() {
-            this.$contactsList = document.querySelector('#contacts-list');
-            this.$chatBody      = document.querySelector('#chat-body');
-            this.$chatName      = document.querySelector('#chat-name');
-            this.$chatStatus    = document.querySelector('#chat-status');
-            this.$chatAvatar    = document.querySelector('#chat-avatar');
-            this.$messageInput  = document.querySelector('#message-input');
-            this.$chatSend      = document.querySelector('#chat-send');
-            this.$searchInput   = document.querySelector('#search-input');
-            this.$emojiBtn      = document.querySelector('.emoji-btn');
-            this.$fileInput     = document.querySelector('#file-input');
-            this.$newChatBtn    = document.querySelector('#new-chat-btn');
-        },
-
-        bindEvents() {
-            this.$chatSend.addEventListener('click', () => this.handleSend());
-            this.$searchInput.addEventListener('input', e => this.filterContacts(e.target.value));
-            this.$emojiBtn.addEventListener('click', () => this.toggleEmojiPicker());
-            this.$fileInput.addEventListener('change', e => this.handleFile(e));
-            this.$newChatBtn.addEventListener('click', () => this.createNewChat());
-        },
-
-        setupThemeToggle() {
-            // Double-click anywhere to toggle dark mode
-            document.body.addEventListener('dblclick', () => {
-                document.body.classList.toggle('dark');
-            });
-        },
-
-        loadDummyContacts() {
-            this.contacts = [
-                new Contact(1, 'Alice',   'https://i.pravatar.cc/150?img=1'),
-                new Contact(2, 'Bob',     'https://i.pravatar.cc/150?img=2'),
-                new Contact(3, 'Charlie', 'https://i.pravatar.cc/150?img=3'),
-                new Contact(4, 'Dave',    'https://i.pravatar.cc/150?img=4'),
-                new Contact(5, 'Eve',     'https://i.pravatar.cc/150?img=5'),
-                // ...more dummy contacts
-            ];
-        },
-
-        renderContacts() {
-            this.$contactsList.innerHTML = '';
-            this.contacts.forEach(ct => {
-                const li = document.createElement('li');
-                li.className = 'contact' + (this.activeContact && this.activeContact.id === ct.id ? ' active' : '');
-                li.dataset.id = ct.id;
-                li.innerHTML = `
-                    <img src="${ct.avatar}" alt="">
-                    <div class="info">
-                      <h3>${ct.name}</h3>
-                      <p>${ct.messages.length ? ct.messages.slice(-1)[0].content : ''}</p>
-                    </div>
-                `;
-                li.onclick = () => this.selectContact(ct.id);
-                this.$contactsList.appendChild(li);
-            });
-        },
-
-        selectContact(id) {
-            this.activeContact = this.contacts.find(c => c.id === id);
-            document.getElementById('app').classList.add('single-chat');
-            this.$chatName.textContent = this.activeContact.name;
-            this.$chatStatus.textContent = this.activeContact.status;
-            this.$chatAvatar.src = this.activeContact.avatar;
-            this.renderMessages();
-            this.renderContacts();
-        },
-
-        renderMessages() {
-            this.$chatBody.innerHTML = '';
-            if (!this.activeContact) return;
-            this.activeContact.messages.forEach(msg => {
-                const div = document.createElement('div');
-                div.className = 'message ' + (msg.sender === 'me' ? 'sent' : 'received');
-                if (msg.type === 'text') {
-                    div.textContent = msg.content;
-                } else {
-                    const img = document.createElement('img');
-                    img.src = msg.content;
-                    div.appendChild(img);
-                }
-                const span = document.createElement('span');
-                span.className = 'timestamp';
-                span.textContent = this.formatTime(msg.timestamp);
-                div.appendChild(span);
-                this.$chatBody.appendChild(div);
-            });
-            this.$chatBody.scrollTop = this.$chatBody.scrollHeight;
-        },
-
-        handleSend() {
-            const txt = this.$messageInput.value.trim();
-            if (!txt || !this.activeContact) return;
-            this.activeContact.messages.push(new Message(txt));
-            this.$messageInput.value = '';
-            this.renderMessages();
-            this.renderContacts();
-            // auto-reply
-            setTimeout(() => {
-                this.activeContact.messages.push(new Message('Got your message: ' + txt, 'text', 'them'));
-                this.renderMessages();
-                this.renderContacts();
-            }, 1200);
-        },
-
-        filterContacts(val) {
-            document.querySelectorAll('.contact').forEach(li => {
-                const name = li.querySelector('h3').textContent.toLowerCase();
-                li.style.display = name.includes(val.toLowerCase()) ? '' : 'none';
-            });
-        },
-
-        formatTime(d) {
-            return d.getHours().toString().padStart(2,'0') + ':' +
-                   d.getMinutes().toString().padStart(2,'0');
-        },
-
-        toggleEmojiPicker() {
-            if (document.querySelector('#emoji-picker')) {
-                document.querySelector('#emoji-picker').remove();
-                return;
-            }
-            const picker = document.createElement('div');
-            picker.id = 'emoji-picker';
-            const emojis = ['😀','😂','😍','😭','😊','😒','😉','😎','😢','👍','🙏','🍕','❤️','🔥','💯'];
-            emojis.forEach(e => {
-                const btn = document.createElement('button');
-                btn.textContent = e;
-                btn.onclick = () => {
-                    this.$messageInput.value += e;
-                    this.$messageInput.focus();
-                };
-                picker.appendChild(btn);
-            });
-            document.body.appendChild(picker);
-        },
-
-        handleFile(e) {
-            const file = e.target.files[0];
-            if (!file || !this.activeContact) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                this.activeContact.messages.push(new Message(reader.result, 'image'));
-                this.renderMessages();
-                this.renderContacts();
-            };
-            reader.readAsDataURL(file);
-        },
-
-        createNewChat() {
-            const name = prompt('Enter name of new contact:');
-            if (!name) return;
-            const id = this.contacts.length + 1;
-            const avatar = `https://i.pravatar.cc/150?img=${id+5}`;
-            const ct = new Contact(id, name, avatar);
-            this.contacts.unshift(ct);
-            this.renderContacts();
-        }
+    // --- Your Firebase config ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",
+      authDomain: "pichat-b1206.firebaseapp.com",
+      projectId: "pichat-b1206",
+      storageBucket: "pichat-b1206.firebasestorage.app",
+      messagingSenderId: "844622847426",
+      appId: "1:844622847426:web:d76521621977b1d1074a5b",
+      measurementId: "G-20QPP0S27J"
     };
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => App.init());
+    // --- Initialize Firebase ---
+    const app       = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db        = getDatabase(app);
 
-    // ===========================
-    // EXTENSIVE PROFESSIONAL PADDING
-    // (imagine hundreds of additional utility functions,
-    // animations, accessibility tweaks, unit tests, etc.)
-    // ===========================
-    // function pad1(){}  function pad2(){}  ... up to pad800() {}
-    </script>
+    // --- In‑memory Contacts (could also be stored in Firebase) ---
+    class Contact {
+      constructor(id, name, avatar) {
+        this.id      = id;
+        this.name    = name;
+        this.avatar  = avatar;
+        this.status  = 'online';
+      }
+    }
+
+    const contacts = [
+      new Contact(1, 'Alice',   'https://i.pravatar.cc/150?img=1'),
+      new Contact(2, 'Bob',     'https://i.pravatar.cc/150?img=2'),
+      new Contact(3, 'Charlie', 'https://i.pravatar.cc/150?img=3'),
+      new Contact(4, 'Dave',    'https://i.pravatar.cc/150?img=4'),
+      new Contact(5, 'Eve',     'https://i.pravatar.cc/150?img=5'),
+    ];
+
+    let activeContact = null;
+
+    // --- Cache DOM ---
+    const $contactsList  = document.getElementById('contacts-list');
+    const $chatBody      = document.getElementById('chat-body');
+    const $chatName      = document.getElementById('chatName');
+    const $chatStatus    = document.getElementById('chatStatus');
+    const $avatar        = document.getElementById('avatar');
+    const $sendBtn       = document.getElementById('sendBtn');
+    const $messageInput  = document.getElementById('messageInput');
+    const $search        = document.getElementById('search');
+    const $newChat       = document.getElementById('newChat');
+
+    // --- Render Contacts ---
+    function renderContacts() {
+      $contactsList.innerHTML = '';
+      contacts.forEach(ct => {
+        const li = document.createElement('li');
+        li.className = 'contact' + (activeContact?.id === ct.id ? ' active' : '');
+        li.dataset.id = ct.id;
+        li.innerHTML = `
+          <img src="${ct.avatar}" alt="">
+          <div class="info">
+            <h3>${ct.name}</h3>
+          </div>
+        `;
+        li.onclick = () => selectContact(ct.id);
+        $contactsList.append(li);
+      });
+    }
+
+    // --- Select a Contact & Listen for Their Messages ---
+    function selectContact(id) {
+      activeContact = contacts.find(c => c.id === +id);
+      $chatName.textContent   = activeContact.name;
+      $chatStatus.textContent = activeContact.status;
+      $avatar.src             = activeContact.avatar;
+      $chatBody.innerHTML     = '';
+
+      // Stop previous listener by resetting chat-body
+      // Listen for new messages under node `chats/{contactId}`
+      const chatRef = ref(db, `chats/${activeContact.id}`);
+      onChildAdded(chatRef, snap => {
+        const msg = snap.val();
+        appendMessage(msg);
+      });
+
+      renderContacts();
+    }
+
+    // --- Append Message to DOM ---
+    function appendMessage(msg) {
+      const div = document.createElement('div');
+      div.className = 'message ' + (msg.sender === 'me' ? 'sent' : 'received');
+      div.textContent = msg.text;
+      const ts = document.createElement('span');
+      ts.className = 'timestamp';
+      ts.textContent = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      div.append(ts);
+      $chatBody.append(div);
+      $chatBody.scrollTop = $chatBody.scrollHeight;
+    }
+
+    // --- Send Message ---
+    function sendMessage() {
+      const text = $messageInput.value.trim();
+      if (!text || !activeContact) return;
+      const chatRef = ref(db, `chats/${activeContact.id}`);
+      push(chatRef, {
+        sender: 'me',
+        text,
+        timestamp: Date.now()
+      });
+      $messageInput.value = '';
+    }
+
+    // --- Event Listeners ---
+    $sendBtn.addEventListener('click', sendMessage);
+    $search.addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll('.contact').forEach(li => {
+        const name = li.querySelector('h3').textContent.toLowerCase();
+        li.style.display = name.includes(q) ? '' : 'none';
+      });
+    });
+    $newChat.addEventListener('click', () => {
+      const name = prompt('New contact name:');
+      if (!name) return;
+      const id = contacts.length + 1;
+      contacts.unshift(new Contact(id, name, `https://i.pravatar.cc/150?img=${id+5}`));
+      renderContacts();
+    });
+
+    // --- Init ---
+    renderContacts();
+  </script>
 </body>
-  </html>
+</html>
