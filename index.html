@@ -3,128 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mini Royale Prototype</title>
-  <style>body { margin: 0; overflow: hidden; }</style>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+  <title>Minimal Minecraft-like Voxel World</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #instructions {
+      position: absolute;
+      top: 50%; width: 100%; text-align: center;
+      color: white; font-family: sans-serif;
+      user-select: none;
+    }
+  </style>
 </head>
 <body>
-<script>
-window.onload = () => {
-  const config = {
-    type: Phaser.AUTO,
-    parent: 'phaser-example',
-    width: window.innerWidth,
-    height: window.innerHeight,
-    backgroundColor: '#2d2d2d',
-    scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: window.innerWidth,
-      height: window.innerHeight,
-    },
-    physics: {
-      default: 'arcade',
-      arcade: { debug: false }
-    },
-    scene: { preload, create, update }
-  };
+  <div id="instructions">Click to play<br>WASD to move, Mouse to look</div>
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.150.1/build/three.module.js';
+    import { PointerLockControls } from 'https://unpkg.com/three@0.150.1/examples/jsm/controls/PointerLockControls.js';
 
-  const game = new Phaser.Game(config);
-  let player;
-  let bullets;
-  let joystick = { isDown: false, x: 0, y: 0 };
-  let pointerStart = null;
+    let camera, scene, renderer, controls;
+    const objects = [];
+    const worldSize = 50;
+    const maxHeight = 5;
 
-  function preload() {
-    const g = this.make.graphics({ add: false });
+    init();
+    animate();
 
-    g.fillStyle(0x00ff00, 1);
-    g.fillCircle(16, 16, 16);
-    g.generateTexture('playerCircle', 32, 32);
+    function init() {
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
 
-    g.clear();
-    g.fillStyle(0xffffff, 1);
-    g.fillRect(0, 0, 16, 4);
-    g.generateTexture('bulletRect', 16, 4);
-  }
+      // Scene & Camera
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x87ceeb);
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-  function create() {
-    player = this.physics.add.sprite(config.width / 2, config.height / 2, 'playerCircle');
-    player.setCollideWorldBounds(true);
+      // Lights
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(1, 1, 0.5).normalize();
+      scene.add(light);
 
-    bullets = this.physics.add.group({ defaultKey: 'bulletRect', maxSize: 20 });
+      // Controls
+      controls = new PointerLockControls(camera, document.body);
+      document.getElementById('instructions').addEventListener('click', () => {
+        controls.lock();
+      });
+      controls.addEventListener('lock', () => document.getElementById('instructions').style.display = 'none');
+      controls.addEventListener('unlock', () => document.getElementById('instructions').style.display = 'block');
+      scene.add(controls.getObject());
 
-    // Virtual joystick (basic implementation)
-    this.input.on('pointerdown', pointer => {
-      if (pointer.x < config.width / 2) {
-        joystick.isDown = true;
-        pointerStart = { x: pointer.x, y: pointer.y };
+      // World generation (random heights)
+      const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+      for (let x = -worldSize/2; x < worldSize/2; x++) {
+        for (let z = -worldSize/2; z < worldSize/2; z++) {
+          const h = Math.floor(Math.random() * maxHeight) + 1;
+          for (let y = 0; y < h; y++) {
+            const isTop = (y === h - 1);
+            const color = isTop ? 0x00aa00 : 0x8B4513;
+            const mat = new THREE.MeshLambertMaterial({ color });
+            const cube = new THREE.Mesh(boxGeo, mat);
+            cube.position.set(x, y, z);
+            scene.add(cube);
+            objects.push(cube);
+          }
+        }
       }
-    });
 
-    this.input.on('pointerup', () => {
-      joystick.isDown = false;
-      joystick.x = 0;
-      joystick.y = 0;
-    });
+      // Floor boundary
+      const floorGeo = new THREE.PlaneGeometry(worldSize, worldSize);
+      const floorMat = new THREE.MeshPhongMaterial({ color: 0x228B22 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.5;
+      scene.add(floor);
 
-    this.input.on('pointermove', pointer => {
-      if (joystick.isDown && pointerStart) {
-        joystick.x = pointer.x - pointerStart.x;
-        joystick.y = pointer.y - pointerStart.y;
+      // Movement parameters
+      const move = { forward: false, back: false, left: false, right: false };
+      const velocity = new THREE.Vector3();
+      const direction = new THREE.Vector3();
+
+      document.addEventListener('keydown', (e) => {
+        switch (e.code) {
+          case 'KeyW': move.forward = true; break;
+          case 'KeyS': move.back = true; break;
+          case 'KeyA': move.left = true; break;
+          case 'KeyD': move.right = true; break;
+        }
+      });
+      document.addEventListener('keyup', (e) => {
+        switch (e.code) {
+          case 'KeyW': move.forward = false; break;
+          case 'KeyS': move.back = false; break;
+          case 'KeyA': move.left = false; break;
+          case 'KeyD': move.right = false; break;
+        }
+      });
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = 0.1;
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+
+        direction.z = Number(move.forward) - Number(move.back);
+        direction.x = Number(move.right) - Number(move.left);
+        direction.normalize();
+
+        if (move.forward || move.back) velocity.z -= direction.z * 400.0 * delta;
+        if (move.left || move.right) velocity.x -= direction.x * 400.0 * delta;
+
+        controls.moveRight(-velocity.x * delta);
+        controls.moveForward(-velocity.z * delta);
+
+        camera.position.y = camera.position.y; // prevent falling
+
+        renderer.render(scene, camera);
       }
-    });
 
-    this.input.keyboard?.on('keydown-SPACE', () => shoot.call(this));
-  }
-
-  function update() {
-    const speed = 200;
-    player.setVelocity(0);
-
-    if (joystick.isDown) {
-      const norm = Math.sqrt(joystick.x ** 2 + joystick.y ** 2);
-      if (norm > 10) {
-        const dx = joystick.x / norm;
-        const dy = joystick.y / norm;
-        player.setVelocity(dx * speed, dy * speed);
-      }
+      window.addEventListener('resize', onWindowResize);
     }
 
-    if (this.input.activePointer.isDown && this.input.activePointer.x > config.width / 2) {
-      shoot.call(this);
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     }
-
-    player.rotation = Phaser.Math.Angle.Between(
-      player.x,
-      player.y,
-      this.input.activePointer.worldX,
-      this.input.activePointer.worldY
-    );
-
-    bullets.children.each(bullet => {
-      if (bullet.active && (bullet.x < 0 || bullet.x > config.width || bullet.y < 0 || bullet.y > config.height)) {
-        bullets.killAndHide(bullet);
-        bullet.body.enable = false;
-      }
-    }, this);
-  }
-
-  function shoot() {
-    const bullet = bullets.get(player.x, player.y);
-    if (bullet) {
-      bullet.setActive(true).setVisible(true);
-      bullet.body.enable = true;
-      bullet.setRotation(player.rotation);
-
-      this.physics.velocityFromRotation(player.rotation, 500, bullet.body.velocity);
-    }
-  }
-
-  window.addEventListener('resize', () => {
-    game.scale.resize(window.innerWidth, window.innerHeight);
-  });
-};
-</script>
+  </script>
 </body>
 </html>
