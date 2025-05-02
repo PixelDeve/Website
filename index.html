@@ -6,53 +6,69 @@
   <style>
     /* === RESET & BASE === */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: sans-serif; background: #e5ddd5; height: 100vh; overflow: hidden; }
+    html, body { height: 100%; }
+    body { font-family: sans-serif; background: #e5ddd5; overflow: hidden; }
     ul { list-style: none; }
-    button { background: none; border: none; cursor: pointer; }
-    /* === LOGIN SCREEN === */
-    #login { display: flex; justify-content: center; align-items: center; height: 100%; }
-    #login button { font-size: 1rem; padding: 0.75rem 1.5rem; background: #4285F4; color: #fff; border-radius: 0.5rem; }
-    /* === APP LAYOUT === */
-    #app { display: none; height: 100%; }
-    #contacts { width: 30%; background: #f0f2f5; display: flex; flex-direction: column; border-right: 1px solid #ddd; float: left; height: 100%; }
-    #chat     { flex: 1; display: flex; flex-direction: column; margin-left: 30%; height: 100%; }
-    /* === CONTACTS HEADER === */
-    #contacts header { padding: 1rem; background: #ededed; display: flex; justify-content: space-between; align-items: center; }
-    #contacts header h2 { font-size: 1.4rem; }
-    #contacts header button { font-size: 1.2rem; color: #128C7E; }
-    /* === SEARCH === */
-    #contacts .search { margin: 0.5rem 1rem; position: relative; }
-    #contacts .search input { width: 100%; padding: 0.5rem 2.5rem 0.5rem 0.75rem; border-radius: 1rem; border: 1px solid #ccc; }
-    #contacts .search .icon { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #888; }
-    /* === CONTACTS LIST === */
-    #contacts-list { flex: 1; overflow-y: auto; }
-    .contact { display: flex; align-items: center; padding: 0.75rem 1rem; cursor: pointer; transition: background .2s; }
-    .contact:hover, .contact.active { background: #e6e6e6; }
-    .contact img { width: 40px; height: 40px; border-radius: 50%; margin-right: .75rem; }
-    .contact .info h3 { font-size: 1rem; margin-bottom: .2rem; }
-    .contact .info p  { font-size: .85rem; color: #666; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    /* === CHAT HEADER === */
-    #chat header { padding: 1rem; background: #f0f2f5; display: flex; align-items: center; border-bottom: 1px solid #ddd; }
-    #chat header img { width: 40px; height: 40px; border-radius: 50%; margin-right: .75rem; }
-    #chat header .info h3 { font-size: 1.1rem; }
-    #chat header .info p  { font-size: .9rem; color: #666; }
-    #chat header .actions { margin-left: auto; display: flex; gap: 1rem; }
-    #chat header .actions button { font-size: 1.2rem; color: #666; }
-    /* === CHAT BODY === */
-    #chat-body { flex: 1; padding: 1rem; overflow-y: auto; background: #e5ddd5; }
-    .message { max-width: 65%; margin-bottom: 1rem; padding: .75rem; border-radius: .5rem; position: relative; word-wrap: break-word; line-height: 1.3; }
-    .sent     { background: #dcf8c6; margin-left: auto; }
-    .received { background: #fff; margin-right: auto; }
-    .message .timestamp { font-size: .7rem; color: #999; position: absolute; bottom: -1.2rem; right: .5rem; }
-    /* === CHAT FOOTER === */
-    #chat footer { padding: .5rem 1rem; background: #f0f2f5; display: flex; align-items: center; border-top: 1px solid #ddd; }
-    #chat footer textarea { flex: 1; padding: .75rem; border-radius: 1rem; border: 1px solid #ccc; resize: none; height: 40px; font-size: .95rem; }
-    #chat footer button.send { background: #128c7e; color: #fff; border-radius: 1rem; padding: .5rem 1rem; font-size: 1rem; margin-left: .5rem; }
-    /* === SIGN OUT BUTTON === */
-    #signOut { position: absolute; top: 10px; right: 10px; font-size: .9rem; color: #f44336; }
-    /* === SCROLLBAR === */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+    button { background: none; border: none; cursor: pointer; }/* === LOGIN SCREEN === */
+#login { display: flex; justify-content: center; align-items: center; height: 100%; }
+#login button { font-size: 1rem; padding: 0.75rem 1.5rem; background: #4285F4; color: #fff; border-radius: 0.5rem; }
+
+/* === APP LAYOUT === */
+#app { display: flex; height: 100%; }
+#contacts { width: 30%; background: #f0f2f5; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
+#chat     { flex: 1; display: flex; flex-direction: column; }
+
+/* === CONTACTS HEADER === */
+#contacts header { padding: 1rem; background: #ededed; display: flex; justify-content: space-between; align-items: center; }
+#contacts header h2 { font-size: 1.4rem; }
+#contacts header button { font-size: 1.2rem; color: #128C7E; }
+
+/* === SEARCH === */
+#contacts .search { margin: 0.5rem 1rem; position: relative; }
+#contacts .search input { width: 100%; padding: 0.5rem 2.5rem 0.5rem 0.75rem; border-radius: 1rem; border: 1px solid #ccc; }
+#contacts .search .icon { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #888; }
+
+/* === CONTACTS LIST === */
+#contacts-list { flex: 1; overflow-y: auto; }
+.contact { display: flex; align-items: center; padding: 0.75rem 1rem; cursor: pointer; transition: background .2s; }
+.contact:hover, .contact.active { background: #e6e6e6; }
+.contact img { width: 40px; height: 40px; border-radius: 50%; margin-right: .75rem; }
+.contact .info h3 { font-size: 1rem; margin-bottom: .2rem; }
+
+/* === CHAT HEADER === */
+#chat header { padding: 1rem; background: #f0f2f5; display: flex; align-items: center; border-bottom: 1px solid #ddd; }
+#chat header img { width: 40px; height: 40px; border-radius: 50%; margin-right: .75rem; }
+#chat header .info h3 { font-size: 1.1rem; }
+#chat header .info p  { font-size: .9rem; color: #666; }
+
+/* === CHAT BODY === */
+#chat-body { flex: 1; padding: 1rem; overflow-y: auto; background: #e5ddd5; }
+.message { max-width: 65%; margin-bottom: 1rem; padding: .75rem; border-radius: .5rem; position: relative; }
+.sent     { background: #dcf8c6; margin-left: auto; }
+.received { background: #fff; margin-right: auto; }
+.message .timestamp { font-size: .7rem; color: #999; position: absolute; bottom: -1.2rem; right: .5rem; }
+
+/* === CHAT FOOTER === */
+#chat footer { padding: .5rem 1rem; background: #f0f2f5; display: flex; align-items: center; border-top: 1px solid #ddd; }
+#chat footer textarea { flex: 1; padding: .75rem; border-radius: 1rem; border: 1px solid #ccc; resize: none; height: 40px; font-size: .95rem; }
+#chat footer button.send { background: #128c7e; color: #fff; border-radius: 1rem; padding: .5rem 1rem; font-size: 1rem; margin-left: .5rem; }
+
+/* === SIGN OUT BUTTON === */
+#signOut { position: absolute; top: 10px; right: 10px; font-size: .9rem; color: #f44336; }
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  #app { flex-direction: column; }
+  #contacts { width: 100%; height: 35%; border-right: none; border-bottom: 1px solid #ddd; }
+  #chat { margin-left: 0; height: 65%; }
+  #chat header .actions { display: none; }
+  #signOut { top: 5px; right: 5px; }
+}
+
   </style>
 </head>
 <body>
@@ -73,15 +89,10 @@
       <ul id="contacts-list"></ul>
     </div><div id="chat">
   <header>
-    <img src="" id="avatar" alt="">
+    <img src="" id="avatar" alt="avatar">
     <div class="info">
       <h3 id="chatName">Select a chat</h3>
-      <p id="chatStatus">Status</p>
-    </div>
-    <div class="actions">
-      <button>📞</button>
-      <button>🎥</button>
-      <button>⋮</button>
+      <p id="chatStatus">online</p>
     </div>
   </header>
 
@@ -94,13 +105,11 @@
 </div>
 
   </div>  <script type="module">
-    // --- Firebase imports ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
     import { getDatabase, ref, set, push, onChildAdded, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    // --- Firebase config ---
     const firebaseConfig = {
       apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",
       authDomain: "pichat-b1206.firebaseapp.com",
@@ -111,41 +120,36 @@
       measurementId: "G-20QPP0S27J"
     };
 
-    // --- Initialize Firebase ---
-    const app        = initializeApp(firebaseConfig);
-    const analytics  = getAnalytics(app);
-    const db         = getDatabase(app);
-    const auth       = getAuth(app);
-    const provider   = new GoogleAuthProvider();
+    const app       = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db        = getDatabase(app);
+    const auth      = getAuth(app);
+    const provider  = new GoogleAuthProvider();
 
-    // --- DOM Elements ---
-    const loginDiv      = document.getElementById('login');
-    const loginBtn      = document.getElementById('loginBtn');
-    const appDiv        = document.getElementById('app');
-    const signOutBtn    = document.getElementById('signOut');
-    const contactsList  = document.getElementById('contacts-list');
-    const searchInput   = document.getElementById('search');
-    const newChatBtn    = document.getElementById('newChat');
-    const avatarImg     = document.getElementById('avatar');
-    const chatNameEl    = document.getElementById('chatName');
-    const chatStatusEl  = document.getElementById('chatStatus');
-    const chatBodyEl    = document.getElementById('chat-body');
-    const messageInput  = document.getElementById('messageInput');
-    const sendBtn       = document.getElementById('sendBtn');
+    const loginDiv     = document.getElementById('login');
+    const loginBtn     = document.getElementById('loginBtn');
+    const appDiv       = document.getElementById('app');
+    const signOutBtn   = document.getElementById('signOut');
+    const contactsList = document.getElementById('contacts-list');
+    const searchInput  = document.getElementById('search');
+    const newChatBtn   = document.getElementById('newChat');
+    const avatarImg    = document.getElementById('avatar');
+    const chatNameEl   = document.getElementById('chatName');
+    const chatStatusEl = document.getElementById('chatStatus');
+    const chatBodyEl   = document.getElementById('chat-body');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn      = document.getElementById('sendBtn');
 
-    // --- State ---
-    let currentUser     = null;
-    let users           = [];
-    let activeContact   = null;
-    let activeChatRef   = null;
+    let currentUser   = null;
+    let users         = [];
+    let activeContact = null;
+    let activeChatRef = null;
 
-    // --- Auth State Listener ---
     onAuthStateChanged(auth, user => {
       if (user) {
         currentUser = user;
         loginDiv.style.display = 'none';
-        appDiv.style.display   = 'block';
-        // Write user to database
+        appDiv.style.display   = 'flex';
         set(ref(db, `users/${user.uid}`), {
           name: user.displayName,
           avatar: user.photoURL,
@@ -158,7 +162,6 @@
       }
     });
 
-    // --- Login & Logout ---
     loginBtn.addEventListener('click', () => {
       signInWithPopup(auth, provider).catch(console.error);
     });
@@ -166,7 +169,6 @@
       signOut(auth).catch(console.error);
     });
 
-    // --- Load Users ---
     function loadUsers() {
       onValue(ref(db, 'users'), snap => {
         users = [];
@@ -178,7 +180,6 @@
       });
     }
 
-    // --- Render Contacts ---
     function renderContacts() {
       contactsList.innerHTML = '';
       users.forEach(u => {
@@ -190,38 +191,31 @@
       });
     }
 
-    // --- Select Contact & Listen Messages ---
-    function selectContact(userObj) {
-      activeContact = userObj;
-      avatarImg.src    = userObj.avatar;
-      chatNameEl.textContent   = userObj.name;
+    function selectContact(u) {
+      activeContact = u;
+      avatarImg.src    = u.avatar;
+      chatNameEl.textContent   = u.name;
       chatStatusEl.textContent = 'online';
       chatBodyEl.innerHTML      = '';
-      // Determine chat ID (sorted uids)
-      const ids = [currentUser.uid, userObj.uid].sort();
+      const ids = [currentUser.uid, u.uid].sort();
       const chatId = ids.join('_');
-      // Detach previous listener if exists
       activeChatRef = ref(db, `chats/${chatId}`);
-      onChildAdded(activeChatRef, snap => {
-        appendMessage(snap.val());
-      });
+      onChildAdded(activeChatRef, snap => appendMessage(snap.val()));
       renderContacts();
     }
 
-    // --- Append Message ---
     function appendMessage(msg) {
-      const div = document.createElement('div');
-      div.className = 'message ' + (msg.sender === currentUser.uid ? 'sent' : 'received');
-      div.textContent = msg.text;
+      const d = document.createElement('div');
+      d.className = 'message ' + (msg.sender === currentUser.uid ? 'sent' : 'received');
+      d.textContent = msg.text;
       const ts = document.createElement('span');
       ts.className = 'timestamp';
       ts.textContent = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      div.append(ts);
-      chatBodyEl.append(div);
+      d.append(ts);
+      chatBodyEl.append(d);
       chatBodyEl.scrollTop = chatBodyEl.scrollHeight;
     }
 
-    // --- Send Message ---
     sendBtn.addEventListener('click', () => {
       const text = messageInput.value.trim();
       if (!text || !activeContact) return;
@@ -235,20 +229,14 @@
       messageInput.value = '';
     });
 
-    // --- Search Filter ---
     searchInput.addEventListener('input', e => {
       const q = e.target.value.toLowerCase();
-      document.querySelectorAll('.contact').forEach(li => {
-        const name = li.querySelector('h3').textContent.toLowerCase();
-        li.style.display = name.includes(q) ? '' : 'none';
-      });
+      document.querySelectorAll('.contact').forEach(li => li.style.display = li.textContent.toLowerCase().includes(q) ? '' : 'none');
     });
 
-    // --- New Chat (dummy add) ---
     newChatBtn.addEventListener('click', () => {
       const name = prompt('New contact name:');
       if (!name) return;
-      // Generate placeholder UID and avatar
       const uid = Date.now().toString();
       const avatar = `https://i.pravatar.cc/150?img=${Math.floor(Math.random()*70)+1}`;
       set(ref(db, `users/${uid}`), { name, avatar, email: '' });
