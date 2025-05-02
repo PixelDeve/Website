@@ -8,13 +8,13 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:sans-serif; background:#e5ddd5; overflow:hidden; }
     ul { list-style:none; }
-    button,input { border:none; outline:none; }/* LOGIN */
-#login { display:flex; justify-content:center; align-items:center; height:100%; }
-#login button { padding:.75rem 1.5rem; font-size:1rem; background:#4285F4; color:#fff; border-radius:.5rem; }
+    button,input { border:none; outline:none; cursor:pointer; }/* LOGIN SCREEN (full overlay) */
+#login { position:absolute; top:0; left:0; width:100%; height:100%; display:flex; justify-content:center; align-items:center; background:#e5ddd5; z-index:999; }
+#login button { padding:.75rem 1.5rem; font-size:1.1rem; background:#4285F4; color:#fff; border-radius:.5rem; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
 
 /* APP LAYOUT */
 #app { display:flex; height:100%; }
-#sidebar { width:30%; background:#f0f2f5; flex-shrink:0; display:flex; flex-direction:column; border-right:1px solid #ddd; }
+#sidebar { width:30%; background:#f0f2f5; flex-shrink:0; display:flex; flex-direction:column; border-right:1px solid #ddd; position:relative; }
 #main { flex:1; display:flex; flex-direction:column; position:relative; }
 
 /* SIDEBAR */
@@ -22,7 +22,7 @@
 #sidebar header input { flex:1; padding:.5rem; border-radius:1rem; border:1px solid #ccc; }
 #sidebar header button.clear { font-size:1.2rem; }
 #users-list { flex:1; overflow-y:auto; }
-.user-item { display:flex; align-items:center; padding:.75rem; cursor:pointer; transition:background .2s; }
+.user-item { display:flex; align-items:center; padding:.75rem; transition:background .2s; }
 .user-item:hover, .user-item.active { background:#e6e6e6; }
 .user-item img { width:40px; height:40px; border-radius:50%; margin-right:.75rem; }
 .user-item .name { flex:1; font-size:1rem; }
@@ -36,7 +36,6 @@
 #main header .info .name { font-size:1.1rem; }
 #main header .info .status { font-size:.9rem; color:#666; }
 #main header .actions { display:flex; gap:1rem; }
-#main header .actions button { background:transparent; font-size:1.2rem; }
 
 /* CHAT BODY */
 #chat-body { flex:1; padding:1rem; background:#e5ddd5; overflow-y:auto; }
@@ -50,28 +49,26 @@
 #main footer input { flex:1; padding:.75rem; border-radius:1rem; border:1px solid #ccc; font-size:.95rem; }
 #main footer button.send { padding:.5rem 1rem; border-radius:1rem; background:#128c7e; color:#fff; font-size:1rem; }
 
-/* PROFILE */
-#profileBtn { font-size:1.2rem; margin-left:1rem; cursor:pointer; }
-
-/* SIGN OUT */
-#signOut { position:absolute; top:.5rem; right:.5rem; padding:.5rem; color:#f44336; background:rgba(255,255,255,0.7); border-radius:.25rem; }
+/* PROFILE & SIGN OUT */
+#profileBtn, #signOut { padding:.5rem; font-size:1.2rem; background:rgba(255,255,255,0.7); border-radius:.25rem; }
+#profileBtn { margin-left:1rem; }
+#signOut { position:absolute; top:.5rem; right:.5rem; color:#f44336; }
 
 /* MOBILE */
 @media(max-width:768px) {
-  #sidebar { position:absolute; top:0; left:-100%; width:75%; height:100%; z-index:2; transition:left .3s; }
+  #sidebar { position:absolute; top:0; left:-100%; width:75%; height:100%; z-index:100; transition:left .3s; }
   #sidebar.open { left:0; }
   #main header .menu { display:block; }
   #app { flex-direction:column; }
-  #main { margin-top:0; }
 }
 
   </style>
 </head>
 <body>
+  <!-- LOGIN -->
   <div id="login">
     <button id="loginBtn">Sign in with Google</button>
-  </div>
-  <div id="app" style="display:none;">
+  </div>  <!-- APP -->  <div id="app" style="display:none;">
     <div id="sidebar">
       <header>
         <input id="search" placeholder="Search users…" />
@@ -99,27 +96,10 @@
   </div><script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
   import { getAnalytics }  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
-  import {
-    getAuth,
-    signInWithRedirect,
-    getRedirectResult,
-    GoogleAuthProvider,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    setDoc,
-    collection,
-    query,
-    orderBy,
-    addDoc,
-    serverTimestamp,
-    onSnapshot,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, collection, query, orderBy, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+  // Firebase init
   const firebaseConfig = { /* your config */ };
   const app = initializeApp(firebaseConfig);
   getAnalytics(app);
@@ -127,7 +107,7 @@
   const db   = getFirestore(app);
   const provider = new GoogleAuthProvider();
 
-  // DOM
+  // DOM refs
   const loginDiv   = document.getElementById('login');
   const loginBtn   = document.getElementById('loginBtn');
   const appDiv     = document.getElementById('app');
@@ -147,116 +127,97 @@
 
   let currentUser, activeUser, unsubMsgs;
 
+  // Auth handling
   onAuthStateChanged(auth, user => {
     if (user) {
       currentUser = user;
       loginDiv.style.display = 'none';
       appDiv.style.display   = 'flex';
-      requestNotificationPermission();
-      updateLastActive();
-      setDoc(doc(db,'users',user.uid),{ uid:user.uid, name:user.displayName, avatar:user.photoURL, lastActive:serverTimestamp() },{merge:true});
+      // store user
+      setDoc(doc(db,'users',user.uid),{ uid:user.uid, name:user.displayName, avatar:user.photoURL, lastActive: serverTimestamp() },{ merge:true });
       loadUsersRealTime();
     } else {
       loginDiv.style.display = 'flex';
       appDiv.style.display   = 'none';
     }
   });
-  getRedirectResult(auth).catch(console.error);
-  loginBtn.addEventListener('click',()=>signInWithRedirect(auth,provider));
-  signOutBtn.addEventListener('click',()=>signOut(auth));
 
-  menuToggle.addEventListener('click',()=>sidebar.classList.toggle('open'));
+  // Sign-in popup
+  loginBtn.addEventListener('click', () => signInWithPopup(auth, provider).catch(console.error));
+  signOutBtn.addEventListener('click', () => signOut(auth));
 
-  profileBtn.addEventListener('click',async()=>{
+  // Sidebar toggle
+  menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+  // Profile rename
+  profileBtn.addEventListener('click', async () => {
     const newName = prompt('Enter new display name:', currentUser.displayName);
-    if(newName){
-      await setDoc(doc(db,'users',currentUser.uid),{ name:newName },{merge:true});
+    if (newName) {
+      await setDoc(doc(db,'users',currentUser.uid),{ name:newName },{ merge:true });
       chatNameEl.textContent = newName;
     }
   });
 
-  async function loadUsersRealTime(){
-    onSnapshot(collection(db,'users'),snap=>{
-      const arr=[];
-      snap.forEach(d=>arr.push(d.data()));
+  // Load users real-time
+  function loadUsersRealTime() {
+    onSnapshot(collection(db,'users'), snap => {
+      const arr = [];
+      snap.forEach(d => arr.push(d.data()));
       renderUsers(arr);
     });
   }
-  function renderUsers(arr){
-    usersList.innerHTML='';
-    arr.filter(u=>u.uid!==currentUser.uid)
-       .filter(u=>u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase()))
-       .forEach(u=>{
-         const li=document.createElement('li');
-         li.className='user-item'+(activeUser?.uid===u.uid?' active':'');
-         const dot=document.createElement('span');
-         const last=u.lastActive?.toDate?u.lastActive.toDate():null;
-         const online=last && (Date.now()-last.getTime()<60000);
-         dot.className='status-dot';
-         dot.style.background=online?'#4caf50':'#aaa';
-         li.innerHTML=`<img src="${u.avatar}" alt=""/><div class="name">${u.name}</div>`;
-         li.appendChild(dot);
-         li.onclick=()=>selectUser(u);
+  function renderUsers(arr) {
+    usersList.innerHTML = '';
+    arr.filter(u => u.uid !== currentUser.uid)
+       .filter(u => u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase()))
+       .forEach(u => {
+         const li = document.createElement('li');
+         li.className = 'user-item' + (activeUser?.uid === u.uid ? ' active' : '');
+         li.innerHTML = `<img src=\"${u.avatar}\" alt=\"\"/><div class=\"name\">${u.name}</div>`;
+         li.onclick = () => selectUser(u);
          usersList.appendChild(li);
        });
   }
+  searchIn.addEventListener('input', () => loadUsersRealTime());
+  clearBtn.addEventListener('click', () => { searchIn.value = ''; loadUsersRealTime(); });
 
-  searchIn.addEventListener('input',()=>{});
-  clearBtn.addEventListener('click',()=>{searchIn.value=''; renderUsers([...usersList.childNodes].map(n=>n));});
-
-  function selectUser(u){
-    activeUser=u;
-    chatNameEl.textContent=u.name;
-    chatStatEl.textContent='online';
-    chatAvatar.src=u.avatar;
-    chatBody.innerHTML='';
+  // Select user and listen messages
+  function selectUser(u) {
+    activeUser = u;
+    chatNameEl.textContent = u.name;
+    chatStatEl.textContent = 'online';
+    chatAvatar.src = u.avatar;
+    chatBody.innerHTML = '';
     sidebar.classList.remove('open');
-    if(unsubMsgs)unsubMsgs();
-    const ids=[currentUser.uid,u.uid].sort().join('_');
-    const msgsCol=collection(db,'chats',ids,'messages');
-    const q=query(msgsCol,orderBy('timestamp'));
-    unsubMsgs=onSnapshot(q,snap=>{
-      snap.docChanges().forEach(c=>{
-        if(c.type==='added'){
-          appendMsg(c.doc.data());
-          if(c.doc.data().sender!==currentUser.uid)notify(u.name,c.doc.data().text);
-        }
-      });
+    if (unsubMsgs) unsubMsgs();
+    const chatId = [currentUser.uid, u.uid].sort().join('_');
+    const q = query(collection(db,'chats',chatId,'messages'), orderBy('timestamp'));
+    unsubMsgs = onSnapshot(q, snap => {
+      chatBody.innerHTML = '';
+      snap.forEach(doc => appendMsg(doc.data()));
     });
   }
-  function appendMsg(m){
-    const d=document.createElement('div');
-    d.className='msg '+(m.sender===currentUser.uid?'sent':'recv');
-    d.textContent=m.text;
-    const t=document.createElement('div');
-    t.className='ts';
-    t.textContent=m.timestamp?.toDate?m.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'';
+
+  function appendMsg(m) {
+    const d = document.createElement('div');
+    d.className = 'msg ' + (m.sender === currentUser.uid ? 'sent' : 'recv');
+    d.textContent = m.text;
+    const t = document.createElement('div');
+    t.className = 'ts';
+    if (m.timestamp?.toDate) t.textContent = m.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     d.appendChild(t);
     chatBody.appendChild(d);
-    chatBody.scrollTop=chatBody.scrollHeight;
-    updateLastActive();
+    chatBody.scrollTop = chatBody.scrollHeight;
+    setDoc(doc(db,'users',currentUser.uid),{ lastActive: serverTimestamp() },{ merge:true });
   }
 
-  sendBtnEl.addEventListener('click',async()=>{
-    const txt=msgIn.value.trim();
-    if(!txt||!activeUser)return;
-    const ids=[currentUser.uid,activeUser.uid].sort().join('_');
-    await addDoc(collection(db,'chats',ids,'messages'),{ sender:currentUser.uid, text:txt, timestamp:serverTimestamp() });
-    msgIn.value='';
-    updateLastActive();
+  // Send message
+  sendBtnEl.addEventListener('click', async () => {
+    const txt = msgIn.value.trim();
+    if (!txt || !activeUser) return;
+    const chatId = [currentUser.uid, activeUser.uid].sort().join('_');
+    await addDoc(collection(db,'chats',chatId,'messages'),{ sender:currentUser.uid, text:txt, timestamp:serverTimestamp() });
+    msgIn.value = '';
   });
-
-  function updateLastActive(){
-    setDoc(doc(db,'users',currentUser.uid),{ lastActive:serverTimestamp() },{merge:true});
-  }
-
-  function requestNotificationPermission(){
-    if('Notification' in window && Notification.permission!=='granted'){
-      Notification.requestPermission();
-    }
-  }
-  function notify(title,body){
-    if(Notification.permission==='granted')new Notification(title,{ body });
-  }
 </script></body>
 </html>
