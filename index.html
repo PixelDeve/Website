@@ -1,19 +1,16 @@
-<!DOCTYPE html><html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>piChat</title>
-  <style>
-    /* RESET & BASE */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; }
-    body { font-family: sans-serif; background: #e5ddd5; overflow: hidden; }
-    ul { list-style: none; }
-    button { background: none; border: none; cursor: pointer; }/* LOGIN SCREEN */
-#login { display: flex; justify-content: center; align-items: center; height: 100%; }
-#login button { padding: .75rem 1.5rem; font-size: 1rem; background: #4285F4; color: #fff; border-radius: .5rem; }
-
-/* APP LAYOUT */
+<!DOCTYPE html><html lang="en">  <head>  
+  <meta charset="UTF-8">  
+  <meta name="viewport" content="width=device-width, initial-scale=1">  
+  <title>Chat App with Google Auth & Firestore</title>  
+  <style>  
+    /* RESET & BASE */  
+    * { margin: 0; padding: 0; box-sizing: border-box; }  
+    html, body { height: 100%; }  
+    body { font-family: sans-serif; background: #e5ddd5; overflow: hidden; }  
+    ul { list-style: none; }  
+    button { background: none; border: none; cursor: pointer; }/* LOGIN SCREEN */  
+#login { display: flex; justify-content: center; align-items: center; height: 100%; }  
+#login button { padding: .75rem 1.5rem; font-size: 1rem; background: #4285F4; color: #fff; border-radius: .5rem; }  /* APP LAYOUT */
 #app { display: flex; height: 100%; }
 #sidebar { width: 30%; background: #f0f2f5; display: flex; flex-direction: column; border-right: 1px solid #ddd; }
 #main    { flex: 1; display: flex; flex-direction: column; }
@@ -48,190 +45,189 @@
 
 /* RESPONSIVE */
 @media(max-width: 768px) {
-  #app { flex-direction: column; }
-  #sidebar { width: 100%; height: 35%; border-right: none; border-bottom: 1px solid #ddd; }
-  #main    { height: 65%; }
-  #signOut { top: .25rem; right: .25rem; }
+#app { flex-direction: column; }
+#sidebar { width: 100%; height: 35%; border-right: none; border-bottom: 1px solid #ddd; }
+#main    { height: 65%; }
+#signOut { top: .25rem; right: .25rem; }
 }
 
-  </style>
-</head>
-<body>
-  <!-- LOGIN -->
-  <div id="login">
-    <button id="loginBtn">Sign in with Google</button>
-  </div>  <!-- APP -->  <div id="app" style="display:none;">
-    <button id="signOut">Sign Out</button>
-    <div id="sidebar">
-      <header>
-        <input id="search" placeholder="Search users…" />
-        <button class="search-clear" id="clearSearch">×</button>
-      </header>
-      <ul id="users-list"></ul>
-    </div>
-    <div id="main">
-      <header>
-        <img id="chatAvatar" src="" alt="avatar" />
-        <div class="info">
-          <div class="name" id="chatName">Select a user</div>
-          <div class="status" id="chatStatus">offline</div>
-        </div>
-      </header>
-      <div id="chat-body"></div>
-      <footer>
-        <input id="msgInput" placeholder="Type a message…" />
-        <button class="send" id="sendBtn">Send</button>
-      </footer>
-    </div>
-  </div>  <script type="module">
-    // Imports
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAnalytics }  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
-    import {
-      getAuth,
-      signInWithRedirect,
-      getRedirectResult,
-      GoogleAuthProvider,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      setDoc,
-      collection,
-      query,
-      orderBy,
-      addDoc,
-      serverTimestamp,
-      onSnapshot,
-      getDocs
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  </style>  
+</head>  
+<body>  
+  <!-- LOGIN -->  
+  <div id="login">  
+    <button id="loginBtn">Sign in with Google</button>  
+  </div>  <!-- APP -->  <div id="app" style="display:none;">  
+    <button id="signOut">Sign Out</button>  
+    <div id="sidebar">  
+      <header>  
+        <input id="search" placeholder="Search users…" />  
+        <button class="search-clear" id="clearSearch">×</button>  
+      </header>  
+      <ul id="users-list"></ul>  
+    </div>  
+    <div id="main">  
+      <header>  
+        <img id="chatAvatar" src="" alt="avatar" />  
+        <div class="info">  
+          <div class="name" id="chatName">Select a user</div>  
+          <div class="status" id="chatStatus">offline</div>  
+        </div>  
+      </header>  
+      <div id="chat-body"></div>  
+      <footer>  
+        <input id="msgInput" placeholder="Type a message…" />  
+        <button class="send" id="sendBtn">Send</button>  
+      </footer>  
+    </div>  
+  </div>  <script type="module">  
+    // Imports  
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";  
+    import { getAnalytics }  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";  
+    import {  
+      getAuth,  
+      signInWithRedirect,  
+      getRedirectResult,  
+      GoogleAuthProvider,  
+      onAuthStateChanged,  
+      signOut  
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";  
+    import {  
+      getFirestore,  
+      doc,  
+      setDoc,  
+      collection,  
+      query,  
+      orderBy,  
+      addDoc,  
+      serverTimestamp,  
+      onSnapshot,  
+      getDocs  
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";  // Firebase config  
+const firebaseConfig = {  
+  apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",  
+  authDomain: "pichat-b1206.firebaseapp.com",  
+  projectId: "pichat-b1206",  
+  storageBucket: "pichat-b1206.firebasestorage.app",  
+  messagingSenderId: "844622847426",  
+  appId: "1:844622847426:web:d76521621977b1d1074a5b",  
+  measurementId: "G-20QPP0S27J"  
+};  
+// Init  
+const app       = initializeApp(firebaseConfig);  
+const analytics = getAnalytics(app);  
+const auth      = getAuth(app);  
+const db        = getFirestore(app);  
+const provider  = new GoogleAuthProvider();  
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",
-      authDomain: "pichat-b1206.firebaseapp.com",
-      projectId: "pichat-b1206",
-      storageBucket: "pichat-b1206.firebasestorage.app",
-      messagingSenderId: "844622847426",
-      appId: "1:844622847426:web:d76521621977b1d1074a5b",
-      measurementId: "G-20QPP0S27J"
-    };
-    // Init
-    const app       = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const auth      = getAuth(app);
-    const db        = getFirestore(app);
-    const provider  = new GoogleAuthProvider();
+// DOM  
+const loginDiv   = document.getElementById('login');  
+const loginBtn   = document.getElementById('loginBtn');  
+const appDiv     = document.getElementById('app');  
+const signOutBtn = document.getElementById('signOut');  
+const usersList  = document.getElementById('users-list');  
+const searchIn   = document.getElementById('search');  
+const clearBtn   = document.getElementById('clearSearch');  
+const chatNameEl = document.getElementById('chatName');  
+const chatStatEl = document.getElementById('chatStatus');  
+const chatAvatar = document.getElementById('chatAvatar');  
+const chatBody   = document.getElementById('chat-body');  
+const msgIn      = document.getElementById('msgInput');  
+const sendBtnEl  = document.getElementById('sendBtn');  
 
-    // DOM
-    const loginDiv   = document.getElementById('login');
-    const loginBtn   = document.getElementById('loginBtn');
-    const appDiv     = document.getElementById('app');
-    const signOutBtn = document.getElementById('signOut');
-    const usersList  = document.getElementById('users-list');
-    const searchIn   = document.getElementById('search');
-    const clearBtn   = document.getElementById('clearSearch');
-    const chatNameEl = document.getElementById('chatName');
-    const chatStatEl = document.getElementById('chatStatus');
-    const chatAvatar = document.getElementById('chatAvatar');
-    const chatBody   = document.getElementById('chat-body');
-    const msgIn      = document.getElementById('msgInput');
-    const sendBtnEl  = document.getElementById('sendBtn');
+let currentUser, activeUser, unsubMsgs;  
 
-    let currentUser, activeUser, unsubMsgs;
+// Auth state  
+onAuthStateChanged(auth, user => {  
+  if (user) {  
+    currentUser = user;  
+    loginDiv.style.display = 'none';  
+    appDiv.style.display   = 'flex';  
+    // save user  
+    setDoc(doc(db, 'users', user.uid), {  
+      uid: user.uid,  
+      name: user.displayName,  
+      avatar: user.photoURL  
+    }, { merge: true });  
+    loadUsers();  
+  } else {  
+    loginDiv.style.display = 'flex';  
+    appDiv.style.display   = 'none';  
+  }  
+});  
 
-    // Auth state
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        currentUser = user;
-        loginDiv.style.display = 'none';
-        appDiv.style.display   = 'flex';
-        // save user
-        setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          name: user.displayName,
-          avatar: user.photoURL
-        }, { merge: true });
-        loadUsers();
-      } else {
-        loginDiv.style.display = 'flex';
-        appDiv.style.display   = 'none';
-      }
-    });
+// Handle redirect result  
+getRedirectResult(auth).catch(console.error);  
 
-    // Handle redirect result
-    getRedirectResult(auth).catch(console.error);
+// Login  
+loginBtn.addEventListener('click', () => signInWithRedirect(auth, provider));  
+signOutBtn.addEventListener('click', () => signOut(auth));  
 
-    // Login
-    loginBtn.addEventListener('click', () => signInWithRedirect(auth, provider));
-    signOutBtn.addEventListener('click', () => signOut(auth));
+// Load & render users  
+async function loadUsers() {  
+  const snap = await getDocs(collection(db, 'users'));  
+  renderUsers(snap.docs.map(d => d.data()));  
+}  
+function renderUsers(arr) {  
+  usersList.innerHTML = '';  
+  arr.filter(u => u.uid !== currentUser.uid)  
+    .filter(u => u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase()))  
+    .forEach(u => {  
+      const li = document.createElement('li');  
+      li.className = 'user-item' + (activeUser?.uid===u.uid?' active':'');  
+      li.innerHTML = `<img src="${u.avatar}" alt=""/><div class="name">${u.name}</div>`;  
+      li.onclick = () => selectUser(u);  
+      usersList.append(li);  
+    });  
+}  
 
-    // Load & render users
-    async function loadUsers() {
-      const snap = await getDocs(collection(db, 'users'));
-      renderUsers(snap.docs.map(d => d.data()));
-    }
-    function renderUsers(arr) {
-      usersList.innerHTML = '';
-      arr.filter(u => u.uid !== currentUser.uid)
-        .filter(u => u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase()))
-        .forEach(u => {
-          const li = document.createElement('li');
-          li.className = 'user-item' + (activeUser?.uid===u.uid?' active':'');
-          li.innerHTML = `<img src="${u.avatar}" alt=""/><div class="name">${u.name}</div>`;
-          li.onclick = () => selectUser(u);
-          usersList.append(li);
-        });
-    }
+searchIn.addEventListener('input', () => loadUsers());  
+clearBtn.addEventListener('click', () => { searchIn.value=''; loadUsers(); });  
 
-    searchIn.addEventListener('input', () => loadUsers());
-    clearBtn.addEventListener('click', () => { searchIn.value=''; loadUsers(); });
+// Select user & load chat  
+function selectUser(u) {  
+  activeUser = u;  
+  chatNameEl.textContent = u.name;  
+  chatStatEl.textContent = 'online';  
+  chatAvatar.src = u.avatar;  
+  chatBody.innerHTML = '';  
+  if (unsubMsgs) unsubMsgs();  
+  const ids = [currentUser.uid,u.uid].sort();  
+  const chatRef = collection(db,'chats',ids.join('_'),'messages');  
+  const q = query(chatRef, orderBy('timestamp'));  
+  unsubMsgs = onSnapshot(q, snap => {  
+    chatBody.innerHTML = '';  
+    snap.docs.forEach(doc => appendMsg(doc.data()));  
+  });  
+  renderUsers([...usersList.querySelectorAll('.user-item')].map(li=>({}))); // refresh highlight  
+}  
 
-    // Select user & load chat
-    function selectUser(u) {
-      activeUser = u;
-      chatNameEl.textContent = u.name;
-      chatStatEl.textContent = 'online';
-      chatAvatar.src = u.avatar;
-      chatBody.innerHTML = '';
-      if (unsubMsgs) unsubMsgs();
-      const ids = [currentUser.uid,u.uid].sort();
-      const chatRef = collection(db,'chats',ids.join('_'),'messages');
-      const q = query(chatRef, orderBy('timestamp'));
-      unsubMsgs = onSnapshot(q, snap => {
-        chatBody.innerHTML = '';
-        snap.docs.forEach(doc => appendMsg(doc.data()));
-      });
-      renderUsers([...usersList.querySelectorAll('.user-item')].map(li=>({}))); // refresh highlight
-    }
+// Append message  
+function appendMsg(msg) {  
+  const d = document.createElement('div');  
+  d.className = 'msg ' + (msg.sender===currentUser.uid?'sent':'recv');  
+  d.textContent = msg.text;  
+  const t = document.createElement('div');  
+  t.className='ts';  
+  t.textContent = msg.timestamp?.toDate?msg.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'';  
+  d.append(t);  
+  chatBody.append(d);  
+  chatBody.scrollTop = chatBody.scrollHeight;  
+}  
 
-    // Append message
-    function appendMsg(msg) {
-      const d = document.createElement('div');
-      d.className = 'msg ' + (msg.sender===currentUser.uid?'sent':'recv');
-      d.textContent = msg.text;
-      const t = document.createElement('div');
-      t.className='ts';
-      t.textContent = msg.timestamp?.toDate?msg.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'';
-      d.append(t);
-      chatBody.append(d);
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }
+// Send message  
+sendBtnEl.addEventListener('click', async ()=>{  
+  const txt = msgIn.value.trim();  
+  if (!txt||!activeUser) return;  
+  const ids = [currentUser.uid,activeUser.uid].sort();  
+  await addDoc(collection(db,'chats',ids.join('_'),'messages'),{  
+    sender: currentUser.uid,  
+    text: txt,  
+    timestamp: serverTimestamp()  
+  });  
+  msgIn.value = '';  
+});
 
-    // Send message
-    sendBtnEl.addEventListener('click', async ()=>{
-      const txt = msgIn.value.trim();
-      if (!txt||!activeUser) return;
-      const ids = [currentUser.uid,activeUser.uid].sort();
-      await addDoc(collection(db,'chats',ids.join('_'),'messages'),{
-        sender: currentUser.uid,
-        text: txt,
-        timestamp: serverTimestamp()
-      });
-      msgIn.value = '';
-    });
+</script></body>
 
-  </script></body>
 </html>
