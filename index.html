@@ -2,65 +2,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PiChat</title>
+  <title>PiChat - All Features</title>
   <style>
-    /* Base styles and responsiveness */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, html { height: 100%; font-family: sans-serif; background: #e5ddd5; }
-    button, input { border: none; outline: none; }/* Login screen overlay */
-#login { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #e5ddd5; display: flex; justify-content: center; align-items: center; z-index: 999; }
-#login button { background: #4285F4; color: white; padding: 1rem 2rem; font-size: 1rem; border-radius: 0.5rem; }
+    /* RESET & BASE */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family:sans-serif; background:#e5ddd5; overflow:hidden; }
+    button, input { border:none; outline:none; }
+    ul { list-style:none; }/* LOGIN OVERLAY */
+#login { position:absolute; top:0; left:0; right:0; bottom:0; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.05); z-index:1000; }
+#login button { padding:1rem 2rem; font-size:1.2rem; background:#4285F4; color:#fff; border-radius:.5rem; box-shadow:0 2px 6px rgba(0,0,0,0.2); cursor:pointer; }
 
-/* App layout */
-#app { display: flex; height: 100%; display: none; }
-#sidebar { width: 30%; background: #f0f2f5; display: flex; flex-direction: column; border-right: 1px solid #ccc; position: relative; }
-#main { flex: 1; display: flex; flex-direction: column; }
+/* APP LAYOUT */
+#app { display:flex; height:100%; }
+#sidebar { width:30%; background:#f0f2f5; display:flex; flex-direction:column; border-right:1px solid #ccc; position:relative; }
+#main { flex:1; display:flex; flex-direction:column; }
 
-/* Sidebar */
-#sidebar header { padding: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-#sidebar header input { flex: 1; padding: 0.5rem; border-radius: 1rem; border: 1px solid #ccc; }
-#sidebar header button { font-size: 1.2rem; }
-#users-list { overflow-y: auto; flex: 1; }
-.user-item { display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #ddd; cursor: pointer; }
-.user-item:hover, .user-item.active { background: #ddd; }
-.user-item img { width: 40px; height: 40px; border-radius: 50%; margin-right: 0.75rem; }
+/* SIDEBAR */
+#sidebar header { padding:1rem; display:flex; gap:.5rem; }
+#sidebar header input { flex:1; padding:.5rem; border-radius:1rem; border:1px solid #ccc; }
+#sidebar header button { font-size:1.2rem; }
+#users-list { flex:1; overflow-y:auto; }
+.user-item { display:flex; align-items:center; padding:.75rem; border-bottom:1px solid #ddd; cursor:pointer; }
+.user-item.active, .user-item:hover { background:#e0e0e0; }
+.user-item img { width:40px; height:40px; border-radius:50%; margin-right:.75rem; }
+.user-item .info { flex:1; display:flex; justify-content:space-between; align-items:center; }
+.status-dot { width:10px; height:10px; border-radius:50%; margin-left:.5rem; }
 
-/* Main header */
-#main header { padding: 1rem; display: flex; align-items: center; border-bottom: 1px solid #ccc; background: #f0f2f5; }
-#main header .menu { display: none; font-size: 1.5rem; margin-right: 1rem; cursor: pointer; }
-#main header img { width: 40px; height: 40px; border-radius: 50%; margin-right: 1rem; }
-#main header .info { flex: 1; }
-#main header .info .name { font-weight: bold; }
-#main header .info .status { font-size: 0.8rem; color: #666; }
-#main header button { background: transparent; margin-left: 0.5rem; }
+/* MAIN HEADER */
+#main header { padding:1rem; display:flex; align-items:center; background:#f0f2f5; border-bottom:1px solid #ccc; }
+#main header .menu { font-size:1.5rem; margin-right:1rem; cursor:pointer; display:none; }
+#main header img { width:40px; height:40px; border-radius:50%; margin-right:1rem; }
+#main header .info { flex:1; display:flex; flex-direction:column; }
+#main header .info .name { font-weight:bold; }
+#main header .info .status { font-size:.8rem; color:#666; }
+#main header button { background:transparent; margin-left:.5rem; cursor:pointer; }
 
-/* Chat body */
-#chat-body { flex: 1; padding: 1rem; overflow-y: auto; background: #e5ddd5; }
-.msg { max-width: 70%; padding: 0.75rem; margin-bottom: 1rem; border-radius: 0.5rem; position: relative; }
-.msg.sent { background: #dcf8c6; margin-left: auto; }
-.msg.recv { background: #fff; margin-right: auto; }
-.ts { font-size: 0.7rem; color: #666; margin-top: 0.25rem; }
+/* CHAT BODY */
+#chat-body { flex:1; padding:1rem; overflow-y:auto; background:#e5ddd5; }
+.msg { max-width:70%; margin-bottom:1rem; padding:.75rem; border-radius:.5rem; position:relative; }
+.msg.sent { background:#dcf8c6; margin-left:auto; }
+.msg.recv { background:#fff; margin-right:auto; }
+.msg .status { position:absolute; bottom:-1.2rem; right:.5rem; font-size:.7rem; color:#666; }
+.typing-indicator { font-style:italic; margin-left:1rem; color:#666; }
 
-/* Chat input footer */
-#main footer { padding: 1rem; display: flex; align-items: center; gap: 0.5rem; border-top: 1px solid #ccc; background: #f0f2f5; }
-#main footer input { flex: 1; padding: 0.75rem; border-radius: 1rem; border: 1px solid #ccc; }
-#main footer button { padding: 0.75rem 1.5rem; border-radius: 1rem; background: #128C7E; color: white; }
+/* FOOTER INPUT */
+#main footer { padding:1rem; display:flex; gap:.5rem; align-items:center; background:#f0f2f5; border-top:1px solid #ccc; }
+#main footer input { flex:1; padding:.75rem; border-radius:1rem; border:1px solid #ccc; }
+#main footer button { padding:.75rem 1.5rem; border-radius:1rem; background:#128C7E; color:#fff; cursor:pointer; }
 
-/* Responsive for mobile */
-@media (max-width: 768px) {
-  #sidebar { position: absolute; top: 0; left: -100%; width: 75%; height: 100%; z-index: 10; transition: left 0.3s ease; }
-  #sidebar.open { left: 0; }
-  #main header .menu { display: block; }
-  #app { flex-direction: column; }
+/* RESPONSIVE */
+@media(max-width:768px) {
+  #sidebar { position:absolute; top:0; left:-100%; width:75%; height:100%; z-index:100; transition:left .3s ease; }
+  #sidebar.open { left:0; }
+  #main header .menu { display:block; }
+  #app { flex-direction:column; }
 }
 
   </style>
 </head>
 <body>
-  <!-- Login Screen -->
-  <div id="login">
-    <button id="loginBtn">Sign in with Google</button>
-  </div>  <!-- Main App UI -->  <div id="app">
+  <div id="login"><button id="loginBtn">Sign in with Google</button></div>
+  <div id="app">
     <div id="sidebar">
       <header>
         <input id="search" placeholder="Search users..." />
@@ -71,170 +73,204 @@
     <div id="main">
       <header>
         <span class="menu" id="menuToggle">☰</span>
-        <img id="chatAvatar" src="" alt="Avatar" />
+        <img id="chatAvatar" src="" alt="User avatar" />
         <div class="info">
-          <div class="name" id="chatName">Select a user</div>
-          <div class="status" id="chatStatus">offline</div>
+          <span class="name" id="chatName">Select a user</span>
+          <span class="status" id="chatStatus">offline</span>
         </div>
+        <button id="profileBtn">✎</button>
         <button id="signOut">⎋</button>
       </header>
-      <div id="chat-body"></div>
+      <div id="chat-body">
+        <div id="typingIndicator" class="typing-indicator" style="display:none;">Typing...</div>
+      </div>
       <footer>
         <input id="msgInput" placeholder="Type a message..." />
         <button id="sendBtn">Send</button>
       </footer>
     </div>
-  </div>  <script type="module">
+  </div>
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
-      getAuth,
-      signInWithPopup,
-      GoogleAuthProvider,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      setDoc,
-      collection,
-      query,
-      orderBy,
-      addDoc,
-      serverTimestamp,
-      onSnapshot
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+      getFirestore, doc, setDoc, collection, query, orderBy, addDoc, serverTimestamp,
+      onSnapshot, updateDoc
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";const firebaseConfig = {
+  apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",
+  authDomain: "pichat-b1206.firebaseapp.com",
+  databaseURL: "https://pichat-b1206-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "pichat-b1206",
+  storageBucket: "pichat-b1206.firebasestorage.app",
+  messagingSenderId: "844622847426",
+  appId: "1:844622847426:web:d76521621977b1d1074a5b",
+  measurementId: "G-20QPP0S27J"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
 
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",
-      authDomain: "pichat-b1206.firebaseapp.com",
-      databaseURL: "https://pichat-b1206-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "pichat-b1206",
-      storageBucket: "pichat-b1206.firebasestorage.app",
-      messagingSenderId: "844622847426",
-      appId: "1:844622847426:web:d76521621977b1d1074a5b",
-      measurementId: "G-20QPP0S27J"
-    };
+// DOM
+const loginDiv = document.getElementById('login');
+const loginBtn = document.getElementById('loginBtn');
+const appDiv = document.getElementById('app');
+const sidebar = document.getElementById('sidebar');
+const menuToggle = document.getElementById('menuToggle');
+const signOutBtn = document.getElementById('signOut');
+const profileBtn = document.getElementById('profileBtn');
+const usersList = document.getElementById('users-list');
+const searchIn = document.getElementById('search');
+const clearSearch = document.getElementById('clearSearch');
+const chatNameEl = document.getElementById('chatName');
+const chatStatEl = document.getElementById('chatStatus');
+const chatAvatar = document.getElementById('chatAvatar');
+const chatBody = document.getElementById('chat-body');
+const typingInd = document.getElementById('typingIndicator');
+const msgIn = document.getElementById('msgInput');
+const sendBtn = document.getElementById('sendBtn');
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    getAnalytics(app);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
+let currentUser, activeUser, unsubMsgs, unsubTyping;
 
-    // DOM elements
-    const loginDiv = document.getElementById('login');
-    const loginBtn = document.getElementById('loginBtn');
-    const appDiv = document.getElementById('app');
-    const sidebar = document.getElementById('sidebar');
-    const menuToggle = document.getElementById('menuToggle');
-    const signOutBtn = document.getElementById('signOut');
-    const usersList = document.getElementById('users-list');
-    const chatNameEl = document.getElementById('chatName');
-    const chatStatEl = document.getElementById('chatStatus');
-    const chatAvatar = document.getElementById('chatAvatar');
-    const chatBody = document.getElementById('chat-body');
-    const msgIn = document.getElementById('msgInput');
-    const sendBtnEl = document.getElementById('sendBtn');
-    const searchIn = document.getElementById('search');
-    const clearSearch = document.getElementById('clearSearch');
+// Auth
+loginBtn.addEventListener('click', () => signInWithPopup(auth, provider).catch(console.error));
+signOutBtn.addEventListener('click', () => signOut(auth));
 
-    let currentUser, activeUser, unsubMsgs;
+onAuthStateChanged(auth, user => {
+  if (user) {
+    currentUser = user;
+    loginDiv.style.display = 'none';
+    appDiv.style.display = 'flex';
+    // Save user
+    setDoc(doc(db, 'users', user.uid), {
+      uid: user.uid,
+      name: user.displayName,
+      avatar: user.photoURL,
+      lastActive: serverTimestamp()
+    }, { merge: true });
+    loadUsers();
+  } else {
+    loginDiv.style.display = 'flex';
+    appDiv.style.display = 'none';
+  }
+});
 
-    // Sign in and out handlers
-    loginBtn.addEventListener('click', () => signInWithPopup(auth, provider).catch(console.error));
-    signOutBtn.addEventListener('click', () => signOut(auth));
+// Sidebar toggle
+menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+clearSearch.addEventListener('click', () => { searchIn.value = ''; loadUsers(); });
+searchIn.addEventListener('input', () => loadUsers());
 
-    // Toggle sidebar on mobile
-    menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-
-    // Clear search
-    clearSearch.addEventListener('click', () => { searchIn.value = ''; loadUsers(); });
-    searchIn.addEventListener('input', () => loadUsers());
-
-    // Auth state listener
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        currentUser = user;
-        loginDiv.style.display = 'none';
-        appDiv.style.display = 'flex';
-        // Save or update user info
-        setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          name: user.displayName,
-          avatar: user.photoURL,
-          lastActive: serverTimestamp()
-        }, { merge: true });
-        loadUsers();
-      } else {
-        loginDiv.style.display = 'flex';
-        appDiv.style.display = 'none';
-      }
+// Load users
+function loadUsers() {
+  onSnapshot(collection(db, 'users'), snap => {
+    usersList.innerHTML = '';
+    snap.forEach(docSnap => {
+      const u = docSnap.data();
+      if (u.uid === currentUser.uid) return;
+      if (!u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase())) return;
+      const li = document.createElement('li');
+      li.className = 'user-item';
+      li.innerHTML = `<img src="${u.avatar}"/><div class="info"><span>${u.name}</span><span class="status-dot" style="background:${isOnline(u.lastActive)?'#4caf50':'#aaa'}"></span></div>`;
+      li.onclick = () => selectUser(u);
+      usersList.appendChild(li);
     });
+  });
+}
 
-    // Load and render users
-    function loadUsers() {
-      onSnapshot(collection(db, 'users'), snap => {
-        const arr = [];
-        snap.forEach(d => arr.push(d.data()));
-        usersList.innerHTML = '';
-        arr
-          .filter(u => u.uid !== currentUser.uid)
-          .filter(u => u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase()))
-          .forEach(u => {
-            const li = document.createElement('li');
-            li.className = 'user-item';
-            li.innerHTML = `<img src="${u.avatar}" alt="Avatar" /><div class="name">${u.name}</div>`;
-            li.onclick = () => selectUser(u);
-            usersList.appendChild(li);
-          });
-      });
-    }
+// Check online by lastActive
+function isOnline(ts) {
+  if (!ts) return false;
+  return (Date.now() - ts.toMillis()) < 60000;
+}
 
-    // Select user and listen for messages
-    function selectUser(u) {
-      activeUser = u;
-      chatNameEl.textContent = u.name;
-      chatStatEl.textContent = 'online';
-      chatAvatar.src = u.avatar;
-      chatBody.innerHTML = '';
-      sidebar.classList.remove('open');
-      if (unsubMsgs) unsubMsgs();
-      const chatId = [currentUser.uid, u.uid].sort().join('_');
-      const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp'));
-      unsubMsgs = onSnapshot(q, snap => {
-        chatBody.innerHTML = '';
-        snap.forEach(doc => appendMsg(doc.data()));
-      });
-    }
+// Select user and setup chat
+function selectUser(u) {
+  activeUser = u;
+  chatNameEl.textContent = u.name;
+  chatStatEl.textContent = isOnline(u.lastActive)?'online':`last seen ${Math.floor((Date.now()-u.lastActive.toMillis())/60000)}m ago`;
+  chatAvatar.src = u.avatar;
+  chatBody.innerHTML = '<div id="typingIndicator" class="typing-indicator" style="display:none;">Typing...</div>';
+  sidebar.classList.remove('open');
+  if (unsubMsgs) unsubMsgs();
+  if (unsubTyping) unsubTyping();
 
-    // Append message to chat body
-    function appendMsg(m) {
-      const d = document.createElement('div');
-      d.className = 'msg ' + (m.sender === currentUser.uid ? 'sent' : 'recv');
-      d.textContent = m.text;
-      const ts = document.createElement('div');
-      ts.className = 'ts';
-      if (m.timestamp?.toDate) ts.textContent = m.timestamp.toDate().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-      d.appendChild(ts);
-      chatBody.appendChild(d);
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }
+  const chatId = [currentUser.uid, u.uid].sort().join('_');
+  const msgsCol = collection(db, 'chats', chatId, 'messages');
+  const q = query(msgsCol, orderBy('timestamp'));
+  unsubMsgs = onSnapshot(q, snap => {
+    chatBody.innerHTML = '<div id="typingIndicator" class="typing-indicator" style="display:none;">Typing...</div>';
+    snap.forEach(docSnap => appendMsg(docSnap.id, docSnap.data()));
+  });
 
-    // Send message
-    sendBtnEl.addEventListener('click', async () => {
-      const txt = msgIn.value.trim();
-      if (!txt || !activeUser) return;
-      const chatId = [currentUser.uid, activeUser.uid].sort().join('_');
-      await addDoc(collection(db, 'chats', chatId, 'messages'), {
-        sender: currentUser.uid,
-        text: txt,
-        timestamp: serverTimestamp()
-      });
-      msgIn.value = '';
-    });
-  </script></body>
+  // Typing indicator
+  const typingCol = collection(db, 'typing', chatId, 'users');
+  unsubTyping = onSnapshot(typingCol, snap => {
+    const typingUsers = [];
+    snap.forEach(d => { if (d.id !== currentUser.uid) typingUsers.push(d.id); });
+    typingInd.style.display = typingUsers.length?'block':'none';
+  });
+}
+
+// Append message with status and receipts
+function appendMsg(id, m) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + (m.sender===currentUser.uid?'sent':'recv');
+  d.textContent = m.text;
+  const statusSpan = document.createElement('span'); statusSpan.className='status';
+  // Sent
+  if (m.sender===currentUser.uid) {
+    if (!m.delivered) statusSpan.textContent='✓';
+    else if (!m.read) statusSpan.textContent='✓✓';
+    else statusSpan.textContent='✓✓';
+  }
+  d.appendChild(statusSpan);
+  chatBody.appendChild(d);
+  chatBody.scrollTop = chatBody.scrollHeight;
+
+  // Mark delivered and read
+  if (m.sender!==currentUser.uid && !m.read) {
+    const chatId=[currentUser.uid,activeUser.uid].sort().join('_');
+    updateDoc(doc(db,'chats',chatId,'messages',id),{ delivered:true, read:true });
+  }
+}
+
+// Send message
+sendBtn.addEventListener('keypress', e=>{
+  setTyping(true);
+  if (e.key==='Enter') { e.preventDefault(); send(); }
+});
+sendBtn.addEventListener('click', send);
+msgIn.addEventListener('input', ()=>{ setTyping(msgIn.value.trim()!==''); });
+msgIn.addEventListener('blur', ()=> setTyping(false));
+
+function send() {
+  const txt = msgIn.value.trim(); if (!txt||!activeUser) return;
+  const chatId=[currentUser.uid,activeUser.uid].sort().join('_');
+  addDoc(collection(db,'chats',chatId,'messages'),{ sender:currentUser.uid, text:txt, timestamp:serverTimestamp(), delivered:false, read:false });
+  msgIn.value=''; setTyping(false);
+}
+
+// Typing
+let typingTimeout;
+function setTyping(status) {
+  if (!activeUser) return;
+  const chatId=[currentUser.uid,activeUser.uid].sort().join('_');
+  const userRef = doc(db,'typing',chatId,'users',currentUser.uid);
+  if (status) {
+    setDoc(userRef,{ typing:true });
+    clearTimeout(typingTimeout);
+    typingTimeout=setTimeout(()=>setTyping(false),2000);
+  } else {
+    setDoc(userRef,{ typing:false });
+  }
+}
+
+// Profile edit
+profileBtn.addEventListener('click',async()=>{
+  const newName=prompt('New name:',currentUser.displayName);
+  if(newName) { await setDoc(doc(db,'users',currentUser.uid),{ name:newName },{ merge:true }); }
+});
+
+  </script>
+</body>
 </html>
