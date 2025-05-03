@@ -36,9 +36,11 @@
     #login, #app { height: 100%; }
     #login { display: flex; justify-content: center; align-items: center; }
     #login button { padding: .75rem 1.5rem; font-size: 1rem; background: var(--primary); color: #fff; border-radius: .5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-    #app { display: flex; }
+    #app { display: flex; position: relative; }
     #sidebar { width: 30%; background: var(--light-bg); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
     #main    { flex: 1; display: flex; flex-direction: column; }
+    /* Hamburger Toggle */
+    #menuToggle { position: absolute; top: 1rem; left: 1rem; padding: .5rem; border-radius:50%; background:var(--light-bg); box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: none; z-index: 200; }
     /* Sidebar */
     #sidebar header { padding: 1rem; display: flex; align-items: center; gap: .5rem; }
     #sidebar header input { flex: 1; padding: .5rem; border-radius: 1rem; border: 1px solid var(--border); }
@@ -70,9 +72,12 @@
     #darkModeToggle { right: 3rem; }
     /* Responsive */
     @media(max-width: 768px) {
+      #menuToggle { display: block; }
       #app { flex-direction: column; }
-      #sidebar { width: 100%; height: 35%; border-right: none; border-bottom: 1px solid var(--border); }
-      #main    { height: 65%; }
+      #sidebar { width: 80%; height: 100%; position: absolute; left: 0; top: 0; transform: translateX(-100%); transition: transform .3s ease; z-index: 150; }
+      #sidebar.open { transform: translateX(0); }
+      #sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+      #main { height: calc(100% - 35%); position: relative; z-index: 100; }
     }
   </style>
 </head>
@@ -83,6 +88,7 @@
   </div>
   <!-- APP -->
   <div id="app" style="display:none;">
+    <button id="menuToggle">☰</button>
     <button id="signOut">🚪</button>
     <button id="darkModeToggle">🌙</button>
     <div id="sidebar">
@@ -152,6 +158,8 @@ const loginBtn   = document.getElementById('loginBtn');
 const appDiv     = document.getElementById('app');
 const signOutBtn = document.getElementById('signOut');
 const darkBtn    = document.getElementById('darkModeToggle');
+const menuBtn    = document.getElementById('menuToggle');
+const sidebar    = document.getElementById('sidebar');
 const usersList  = document.getElementById('users-list');
 const searchIn   = document.getElementById('search');
 const clearBtn   = document.getElementById('clearSearch');
@@ -169,11 +177,7 @@ onAuthStateChanged(auth, user => {
     currentUser = user;
     loginDiv.style.display = 'none';
     appDiv.style.display   = 'flex';
-    setDoc(doc(db, 'users', user.uid), {
-      uid: user.uid,
-      name: user.displayName,
-      avatar: user.photoURL
-    }, { merge: true });
+    setDoc(doc(db, 'users', user.uid), { uid: user.uid, name: user.displayName, avatar: user.photoURL }, { merge: true });
     loadUsers();
   } else {
     loginDiv.style.display = 'flex';
@@ -185,13 +189,12 @@ loginBtn.addEventListener('click', () => signInWithRedirect(auth, provider));
 signOutBtn.addEventListener('click', () => signOut(auth));
 
 darkBtn.addEventListener('click', () => {
-  const theme = document.body.getAttribute('data-theme');
-  document.body.setAttribute('data-theme', theme === 'light' ? 'dark' : 'light');
+  document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
 });
 
-msgIn.addEventListener('input', () => {
-  sendBtnEl.disabled = !msgIn.value.trim();
-});
+menuBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+msgIn.addEventListener('input', () => sendBtnEl.disabled = !msgIn.value.trim());
 msgIn.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtnEl.click(); });
 
 clearBtn.addEventListener('click', () => { searchIn.value = ''; loadUsers(); });
@@ -203,23 +206,16 @@ async function loadUsers() {
 
 async function renderUsers(arr) {
   usersList.innerHTML = '';
-  const filtered = arr
-    .filter(u => u.uid !== currentUser.uid)
-    .filter(u => u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase()));
+  const filtered = arr.filter(u => u.uid !== currentUser.uid && u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase()));
   for (const u of filtered) {
     const li = document.createElement('li');
     li.className = 'user-item' + (activeUser?.uid===u.uid ? ' active' : '');
     const ids = [currentUser.uid, u.uid].sort();
-    const q = query(
-      collection(db,'chats',ids.join('_'),'messages'),
-      orderBy('timestamp','desc'), limit(1)
-    );
+    const q = query(collection(db,'chats',ids.join('_'),'messages'), orderBy('timestamp','desc'), limit(1));
     const msgSnap = await getDocs(q);
     const last = msgSnap.docs[0]?.data();
     const preview = last ? last.text : '';
-    const time = last && last.timestamp?.toDate
-      ? last.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-      : '';
+    const time = last && last.timestamp?.toDate ? last.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
     li.innerHTML = `
       <img src="${u.avatar}" alt="" />
       <div class="info">
@@ -235,6 +231,7 @@ async function renderUsers(arr) {
 
 function selectUser(u) {
   activeUser = u;
+  sidebar.classList.remove('open');
   chatNameEl.textContent = u.name;
   chatStatEl.textContent = 'online';
   chatAvatar.src = u.avatar;
@@ -243,11 +240,8 @@ function selectUser(u) {
   const ids = [currentUser.uid, u.uid].sort();
   const chatRef = collection(db, 'chats', ids.join('_'), 'messages');
   const q = query(chatRef, orderBy('timestamp'));
-  unsubMsgs = onSnapshot(q, snap => {
-    chatBody.innerHTML = '';
-    snap.docs.forEach(doc => appendMsg(doc.data()));
-  });
-  renderUsers([...usersList.querySelectorAll('.user-item')].map(li=>({}))); // refresh
+  unsubMsgs = onSnapshot(q, snap => { chatBody.innerHTML = ''; snap.docs.forEach(doc => appendMsg(doc.data())); });
+  renderUsers([...usersList.querySelectorAll('.user-item')].map(li=>({}))); 
 }
 
 function appendMsg(msg) {
@@ -257,24 +251,15 @@ function appendMsg(msg) {
   const t = document.createElement('div');
   t.className = 'ts';
   const date = msg.timestamp?.toDate();
-  t.textContent = date
-    ? `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`
-    : '';
-  d.append(t);
-  chatBody.append(d);
-  chatBody.scrollTop = chatBody.scrollHeight;
+  t.textContent = date ? `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}` : '';
+  d.append(t); chatBody.append(d); chatBody.scrollTop = chatBody.scrollHeight;
 }
 
 sendBtnEl.addEventListener('click', async () => {
-  const txt = msgIn.value.trim();
-  if (!txt || !activeUser) return;
+  const txt = msgIn.value.trim(); if (!txt || !activeUser) return;
   const ids = [currentUser.uid, activeUser.uid].sort();
-  await addDoc(
-    collection(db,'chats',ids.join('_'),'messages'),
-    { sender: currentUser.uid, text: txt, timestamp: serverTimestamp() }
-  );
-  msgIn.value = '';
-  sendBtnEl.disabled = true;
+  await addDoc(collection(db,'chats',ids.join('_'),'messages'), { sender:currentUser.uid, text:txt, timestamp:serverTimestamp() });
+  msgIn.value = ''; sendBtnEl.disabled = true;
 });
 
   </script>
