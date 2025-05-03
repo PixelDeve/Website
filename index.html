@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,139 +8,151 @@
     /* RESET & BASE */
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:sans-serif; background:#e5ddd5; overflow:hidden; }
-    button,input,textarea { border:none; outline:none; }
-    ul { list-style:none; }/* LOGIN OVERLAY */
-#login { position:absolute; top:0; left:0; right:0; bottom:0; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.05); z-index:1000; }
-#login button { padding:1rem 2rem; font-size:1.2rem; background:#4285F4; color:#fff; border-radius:.5rem; cursor:pointer; }
+    button, input, textarea { border:none; outline:none; }
+    ul { list-style:none; padding:0; margin:0; }
 
-/* NAVBAR */
-nav { background:#128C7E; color:#fff; display:flex; justify-content:space-around; padding:1rem; }
-nav button { background:transparent; border:none; color:#fff; font-size:1rem; cursor:pointer; }
+    /* LOGIN OVERLAY */
+    #login { position:absolute; inset:0; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.05); z-index:1000; }
+    #login button { padding:1rem 2rem; font-size:1.2rem; background:#4285F4; color:#fff; border-radius:.5rem; cursor:pointer; }
 
-/* LAYOUT */
-#app { display:flex; height:calc(100% - 60px); }
-#sidebar { width:30%; background:#f0f2f5; border-right:1px solid #ccc; overflow-y:auto; padding:1rem; }
-#content { flex:1; display:flex; flex-direction:column; }
+    /* NAVBAR */
+    nav { background:#128C7E; color:#fff; display:flex; justify-content:space-around; align-items:center; height:60px; }
+    nav button { background:transparent; color:#fff; font-size:1rem; cursor:pointer; flex:1; }
 
-/* SIDEBAR LISTS */
-#sidebar h3 { margin-bottom:.5rem; }
-#usersList, #friendsList { margin-bottom:2rem; }
-.list-item { display:flex; align-items:center; justify-content:space-between; padding:.5rem; border-bottom:1px solid #ddd; cursor:pointer; }
-.list-item:hover { background:#e0e0e0; }
-.list-item img { width:32px; height:32px; border-radius:50%; margin-right:.5rem; }
-.list-item button { background:#128C7E; color:#fff; padding:.25rem .5rem; border-radius:.25rem; cursor:pointer; }
+    /* LAYOUT */
+    #app { display:flex; height:calc(100% - 60px); }
+    #sidebar { width:30%; background:#f0f2f5; border-right:1px solid #ccc; overflow-y:auto; padding:1rem; }
+    #content { flex:1; display:flex; flex-direction:column; }
 
-/* HEADER */
-#mainHeader { display:flex; align-items:center; padding:1rem; background:#f0f2f5; border-bottom:1px solid #ccc; }
-#mainHeader img { width:40px; height:40px; border-radius:50%; margin-right:1rem; }
-#mainHeader .info { flex:1; }
-#mainHeader .info .name { font-weight:bold; }
-#mainHeader .info .status { font-size:.8rem; color:#666; }
-#mainHeader button { background:transparent; font-size:1.2rem; margin-left:.5rem; cursor:pointer; }
+    /* SIDEBAR LISTS */
+    #sidebar h3 { margin-bottom:.5rem; }
+    .list-item { display:flex; align-items:center; justify-content:space-between; padding:.5rem; border-bottom:1px solid #ddd; cursor:pointer; }
+    .list-item:hover { background:#e0e0e0; }
+    .list-item img { width:32px; height:32px; border-radius:50%; margin-right:.5rem; }
+    .list-item button { background:#128C7E; color:#fff; padding:.25rem .5rem; border-radius:.25rem; cursor:pointer; }
 
-/* SECTIONS */
-section { flex:1; overflow-y:auto; padding:1rem; }
-.hidden { display:none; }
+    /* MAIN HEADER */
+    #mainHeader { display:flex; align-items:center; padding:1rem; background:#f0f2f5; border-bottom:1px solid #ccc; }
+    #mainHeader img { width:40px; height:40px; border-radius:50%; margin-right:1rem; }
+    #mainHeader .info { flex:1; }
+    #mainHeader .info .name { font-weight:bold; }
+    #mainHeader .info .status { font-size:.8rem; color:#666; }
+    #mainHeader button { background:transparent; font-size:1.2rem; margin-left:.5rem; cursor:pointer; }
 
-/* HOME/POSTS */
-#postForm { display:flex; flex-direction:column; margin-bottom:1rem; }
-#postForm textarea { resize:none; padding:.5rem; border:1px solid #ccc; border-radius:.5rem; height:60px; margin-bottom:.5rem; }
-#postForm input[type=file] { margin-bottom:.5rem; }
-#postForm select, #postForm button { margin-bottom:.5rem; padding:.5rem; border-radius:.5rem; }
-#posts .post { background:#fff; padding:1rem; border-radius:.5rem; margin-bottom:1rem; }
-.post .actions { margin-top:.5rem; display:flex; gap:.5rem; }
-.reaction { cursor:pointer; }
+    /* SECTIONS */
+    section { flex:1; overflow-y:auto; padding:1rem; }
+    .hidden { display:none; }
 
-/* CHAT */
-#chatWindow { flex:1; padding:1rem; background:#e5ddd5; overflow-y:auto; }
-.msg { max-width:70%; padding:.75rem; margin-bottom:1rem; border-radius:.5rem; position:relative; }
-.msg.sent { background:#dcf8c6; margin-left:auto; }
-.msg.recv { background:#fff; margin-right:auto; }
-.msg .status { position:absolute; bottom:-1.2rem; right:.5rem; font-size:.7rem; color:#666; }
-#typingIndicator { font-style:italic; color:#666; margin-left:1rem; }
-#chatFooter { display:flex; gap:.5rem; padding:1rem; background:#f0f2f5; border-top:1px solid #ccc; }
-#chatFooter input { flex:1; padding:.5rem; border:1px solid #ccc; border-radius:.5rem; }
-#chatFooter button { padding:.5rem 1rem; background:#128C7E; color:#fff; border-radius:.5rem; cursor:pointer; }
+    /* HOME/POSTS */
+    #postForm { display:flex; flex-direction:column; margin-bottom:1rem; }
+    #postForm textarea { resize:none; padding:.5rem; border:1px solid #ccc; border-radius:.5rem; height:60px; margin-bottom:.5rem; }
+    #postForm select, #postForm button { padding:.5rem; border-radius:.5rem; margin-bottom:.5rem; }
+    #posts .post { background:#fff; padding:1rem; border-radius:.5rem; margin-bottom:1rem; }
+    .post .actions { margin-top:.5rem; display:flex; gap:.5rem; }
+    .reaction { cursor:pointer; }
 
-/* PROFILE */
-#profileEdit { display:flex; flex-direction:column; }
-#profileEdit input, #profileEdit textarea { padding:.5rem; border:1px solid #ccc; border-radius:.5rem; margin-bottom:.5rem; }
-#profileEdit button { padding:.5rem; background:#128C7E; color:#fff; border-radius:.5rem; cursor:pointer; }
-#myPosts .post { position:relative; }
-#myPosts button.delete { position:absolute; top:.5rem; right:.5rem; background:#f44336; color:#fff; border-radius:.25rem; padding:.25rem; cursor:pointer; }
+    /* CHAT */
+    #chatWindow { flex:1; padding:1rem; background:#e5ddd5; overflow-y:auto; }
+    .msg { max-width:70%; padding:.75rem; margin-bottom:1rem; border-radius:.5rem; position:relative; }
+    .msg.sent { background:#dcf8c6; margin-left:auto; }
+    .msg.recv { background:#fff; margin-right:auto; }
+    .msg .status { position:absolute; bottom:-1.2rem; right:.5rem; font-size:.7rem; color:#666; }
+    #typingIndicator { font-style:italic; color:#666; margin-left:1rem; }
+    #chatFooter { display:flex; gap:.5rem; padding:1rem; background:#f0f2f5; border-top:1px solid #ccc; }
+    #chatFooter input { flex:1; padding:.5rem; border:1px solid #ccc; border-radius:.5rem; }
+    #chatFooter button { padding:.5rem 1rem; background:#128C7E; color:#fff; border-radius:.5rem; cursor:pointer; }
 
-/* RESPONSIVE */
-@media(max-width:768px) {
-  #sidebar { display:none; }
-  nav button { flex:1; }
-}
+    /* PROFILE */
+    #profileEdit { display:flex; flex-direction:column; margin-bottom:1rem; }
+    #profileEdit textarea { padding:.5rem; border:1px solid #ccc; border-radius:.5rem; margin-bottom:.5rem; }
+    #profileEdit button { padding:.5rem; background:#128C7E; color:#fff; border-radius:.5rem; cursor:pointer; }
+    #myPosts .post { position:relative; background:#fff; padding:1rem; border-radius:.5rem; margin-bottom:1rem; }
+    #myPosts button.delete { position:absolute; top:.5rem; right:.5rem; background:#f44336; color:#fff; border-radius:.25rem; padding:.25rem; cursor:pointer; }
 
+    /* RESPONSIVE */
+    @media(max-width:768px) {
+      #sidebar { display:none; }
+      nav button { flex:1; }
+    }
   </style>
 </head>
 <body>
   <!-- Login Overlay -->
-  <div id="login"><button id="loginBtn">Sign in with Google</button></div>  <!-- Nav -->  <nav>
+  <div id="login"><button id="loginBtn">Sign in with Google</button></div>
+
+  <!-- Nav -->
+  <nav>
     <button id="navHome">Home</button>
     <button id="navChat">Chat</button>
     <button id="navProfile">Profile</button>
-  </nav>  <!-- App Container -->  <div id="app" class="hidden">
+  </nav>
+
+  <!-- App Container -->
+  <div id="app" class="hidden">
     <!-- Sidebar -->
     <div id="sidebar">
       <h3>Friends</h3>
       <ul id="friendsList"></ul>
       <h3>All Users</h3>
       <ul id="usersList"></ul>
-    </div><!-- Main Content -->
-<div id="content">
-  <!-- Header -->
-  <div id="mainHeader">
-    <img id="headerAvatar" src="" alt="avatar" />
-    <div class="info">
-      <div class="name" id="headerName"></div>
-      <div class="status" id="headerStatus"></div>
     </div>
-    <button id="profileBtn">✎</button>
-    <button id="signOut">⎋</button>
+
+    <!-- Main Content -->
+    <div id="content">
+      <!-- Header -->
+      <div id="mainHeader">
+        <img id="headerAvatar" src="" alt="avatar" />
+        <div class="info">
+          <div class="name" id="headerName"></div>
+          <div class="status" id="headerStatus"></div>
+        </div>
+        <button id="profileBtn">Edit Profile</button>
+        <button id="signOut">Logout</button>
+      </div>
+
+      <!-- Home Section -->
+      <section id="homeSection">
+        <form id="postForm">
+          <textarea id="postText" placeholder="What's on your mind?"></textarea>
+          <select id="postPrivacy">
+            <option value="public">Public</option>
+            <option value="friends">Friends</option>
+          </select>
+          <button type="submit">Post</button>
+        </form>
+        <div id="posts"></div>
+      </section>
+
+      <!-- Chat Section -->
+      <section id="chatSection" class="hidden">
+        <div id="typingIndicator" style="display:none;">Typing...</div>
+        <div id="chatWindow"></div>
+        <div id="chatFooter">
+          <input id="chatInput" placeholder="Type a message..." />
+          <button id="chatSend">Send</button>
+        </div>
+      </section>
+
+      <!-- Profile Section -->
+      <section id="profileSection" class="hidden">
+        <form id="profileEdit">
+          <textarea id="bioInput" placeholder="Your bio..."></textarea>
+          <button type="submit">Save Profile</button>
+        </form>
+        <h3>Your Posts</h3>
+        <div id="myPosts"></div>
+      </section>
+    </div>
   </div>
 
-  <!-- Home Section -->
-  <section id="homeSection">
-    <form id="postForm">
-      <textarea id="postText" placeholder="What's on your mind?"></textarea>
-      <input type="file" id="postImage" accept="image/*" />
-      <select id="postPrivacy"><option value="public">Public</option><option value="friends">Friends</option></select>
-      <button type="submit">Post</button>
-    </form>
-    <div id="posts"></div>
-  </section>
-
-  <!-- Chat Section -->
-  <section id="chatSection" class="hidden">
-    <div id="typingIndicator" style="display:none;">Typing...</div>
-    <div id="chatWindow"></div>
-    <div id="chatFooter">
-      <input id="chatInput" placeholder="Type a message..." />
-      <button id="chatSend">Send</button>
-    </div>
-  </section>
-
-  <!-- Profile Section -->
-  <section id="profileSection" class="hidden">
-    <form id="profileEdit">
-      <input type="file" id="avatarInput" accept="image/*" />
-      <textarea id="bioInput" placeholder="Your bio..."></textarea>
-      <button type="submit">Save Profile</button>
-    </form>
-    <h3>Your Posts</h3>
-    <div id="myPosts"></div>
-  </section>
-</div>
-
-  </div>  <script type="module">
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDocs, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+    import {
+      getFirestore, doc, setDoc, getDocs, getDoc,
+      collection, query, orderBy, onSnapshot, addDoc,
+      serverTimestamp, updateDoc, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const config = {
       apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",
@@ -154,7 +167,6 @@ section { flex:1; overflow-y:auto; padding:1rem; }
     const app = initializeApp(config);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
     const provider = new GoogleAuthProvider();
 
     // DOM refs
@@ -175,14 +187,12 @@ section { flex:1; overflow-y:auto; padding:1rem; }
     const headerStatus = document.getElementById('headerStatus');
     const postForm = document.getElementById('postForm');
     const postText = document.getElementById('postText');
-    const postImage = document.getElementById('postImage');
     const postPrivacy = document.getElementById('postPrivacy');
     const postsDiv = document.getElementById('posts');
     const chatWindow = document.getElementById('chatWindow');
     const chatInput = document.getElementById('chatInput');
     const chatSend = document.getElementById('chatSend');
     const typingIndicator = document.getElementById('typingIndicator');
-    const avatarInput = document.getElementById('avatarInput');
     const bioInput = document.getElementById('bioInput');
     const profileEdit = document.getElementById('profileEdit');
     const myPostsDiv = document.getElementById('myPosts');
@@ -191,7 +201,7 @@ section { flex:1; overflow-y:auto; padding:1rem; }
 
     let currentUser, activeUser, unsubMsgs, unsubTyping;
 
-    // NAV FUNCTIONS
+    // NAVIGATION
     function showSection(sec) {
       homeSection.classList.add('hidden');
       chatSection.classList.add('hidden');
@@ -200,13 +210,13 @@ section { flex:1; overflow-y:auto; padding:1rem; }
       if (sec === 'chat') chatSection.classList.remove('hidden');
       if (sec === 'profile') profileSection.classList.remove('hidden');
     }
-    navHome.addEventListener('click', ()=>showSection('home'));
-    navChat.addEventListener('click', ()=>showSection('chat'));
-    navProfile.addEventListener('click', ()=>{ showSection('profile'); loadProfile(); });
+    navHome.addEventListener('click', () => showSection('home'));
+    navChat.addEventListener('click', () => showSection('chat'));
+    navProfile.addEventListener('click', () => { showSection('profile'); loadProfile(); });
 
     // AUTH
-    loginBtn.addEventListener('click', ()=>signInWithPopup(auth, provider));
-    signOutBtn.addEventListener('click', ()=>signOut(auth));
+    loginBtn.addEventListener('click', () => signInWithPopup(auth, provider));
+    signOutBtn.addEventListener('click', () => signOut(auth));
     onAuthStateChanged(auth, user => {
       if (user) {
         currentUser = user;
@@ -224,127 +234,151 @@ section { flex:1; overflow-y:auto; padding:1rem; }
       }
     });
 
-    // USERS & FRIENDS
+    // LOAD USERS & FRIENDS
     async function loadUsersAndFriends() {
-      const usersSnap = await getDocs(collection(db,'users'));
-      const friendsSnap = await getDocs(collection(db,'users',currentUser.uid,'friends'));
-      const friendsSet = new Set(); friendsSnap.forEach(d=>friendsSet.add(d.id));
-      usersList.innerHTML=''; friendsList.innerHTML='';
-      usersSnap.forEach(d=>{
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const friendsSnap = await getDocs(collection(db, 'users', currentUser.uid, 'friends'));
+      const friends = new Set(); friendsSnap.forEach(d => friends.add(d.id));
+      usersList.innerHTML = ''; friendsList.innerHTML = '';
+      usersSnap.forEach(d => {
         const u = d.data();
-        if (u.uid===currentUser.uid) return;
-        const li = document.createElement('li'); li.className='list-item';
+        if (u.uid === currentUser.uid) return;
+        const li = document.createElement('li'); li.className = 'list-item';
         li.innerHTML = `<div><img src="${u.avatar}"/><span>${u.name}</span></div>`;
         const btn = document.createElement('button');
-        if (friendsSet.has(u.uid)) {
-          btn.textContent='Remove'; btn.onclick=()=>toggleFriend(u.uid,false);
-          li.onclick=()=>selectChat(u);
+        if (friends.has(u.uid)) {
+          btn.textContent = 'Remove';
+          btn.onclick = () => toggleFriend(u.uid, false);
+          li.onclick = () => selectChat(u);
           friendsList.appendChild(li);
         } else {
-          btn.textContent='Add'; btn.onclick=()=>toggleFriend(u.uid,true);
+          btn.textContent = 'Add';
+          btn.onclick = () => toggleFriend(u.uid, true);
           usersList.appendChild(li);
         }
         li.appendChild(btn);
       });
     }
-    async function toggleFriend(uid,add) {
-      const ref = doc(db,'users',currentUser.uid,'friends',uid);
-      if(add) await setDoc(ref,{}); else await deleteDoc(ref);
+    async function toggleFriend(uid, add) {
+      const ref = doc(db, 'users', currentUser.uid, 'friends', uid);
+      if (add) await setDoc(ref, {}); else await deleteDoc(ref);
       loadUsersAndFriends();
     }
 
     // POSTS
-    postForm.addEventListener('submit',async e=>{
+    postForm.addEventListener('submit', async e => {
       e.preventDefault();
-      let imgURL='';
-      if(postImage.files[0]){
-        const snap = await uploadBytes(sRef(storage,`posts/${Date.now()}`),postImage.files[0]);
-        imgURL = await getDownloadURL(snap.ref);
-      }
-      await addDoc(collection(db,'posts'),{
-        author:currentUser.uid,
-        text:postText.value,
-        image:imgURL,
-        privacy:postPrivacy.value,
-        timestamp:serverTimestamp()
+      await addDoc(collection(db, 'posts'), {
+        author: currentUser.uid,
+        text: postText.value,
+        privacy: postPrivacy.value,
+        timestamp: serverTimestamp()
       });
-      postText.value=''; postImage.value='';
+      postText.value = '';
+      loadPosts();
     });
     function loadPosts() {
-      onSnapshot(query(collection(db,'posts'),orderBy('timestamp','desc')),snap=>{
-        postsDiv.innerHTML=''; myPostsDiv.innerHTML='';
-        snap.forEach(d=>{
-          const data = d.data(); const id = d.id;
-          // Privacy filter
-          if(data.privacy==='friends'){
-            const friendRef = doc(db,'users',currentUser.uid,'friends',data.author);
-            getDoc(friendRef).then(ff=>{ if(ff.exists()) renderPost(id,data); });
-          } else renderPost(id,data);
-          if(data.author===currentUser.uid) renderMyPost(id,data);
+      onSnapshot(query(collection(db, 'posts'), orderBy('timestamp', 'desc')), snap => {
+        postsDiv.innerHTML = ''; myPostsDiv.innerHTML = '';
+        snap.forEach(d => {
+          const data = d.data(), id = d.id;
+          if (data.privacy === 'friends') {
+            getDoc(doc(db, 'users', currentUser.uid, 'friends', data.author))
+              .then(ff => { if (ff.exists()) renderPost(id, data); });
+          } else renderPost(id, data);
+          if (data.author === currentUser.uid) renderMyPost(id, data);
         });
       });
     }
-    function renderPost(id,data){
-      const p = document.createElement('div'); p.className='post';
-      p.innerHTML = `<div><strong>${data.author}</strong></div>
+    function renderPost(id, data) {
+      const p = document.createElement('div'); p.className = 'post';
+      p.innerHTML = `
+        <div><strong>${data.author}</strong></div>
         <div>${data.text}</div>
-        ${data.image?`<img src="${data.image}" style="max-width:100%;">`:``}
         <div class="actions"><span class="reaction" onclick="react('${id}')">👍</span></div>`;
       postsDiv.appendChild(p);
     }
-    function renderMyPost(id,data){
-      const p = document.createElement('div'); p.className='post';
-      const btn = document.createElement('button'); btn.textContent='Delete'; btn.className='delete'; btn.onclick=()=>deletePost(id);
+    function renderMyPost(id, data) {
+      const p = document.createElement('div'); p.className = 'post';
+      const btn = document.createElement('button'); btn.textContent = 'Delete'; btn.className = 'delete';
+      btn.onclick = () => deletePost(id);
       p.innerHTML = `<div>${data.text}</div>`;
       p.appendChild(btn);
       myPostsDiv.appendChild(p);
     }
-    async function react(id){ await setDoc(doc(db,'posts',id,'reactions',currentUser.uid),{}); }
-    async function deletePost(id){ await deleteDoc(doc(db,'posts',id)); }
+    async function react(id) {
+      await setDoc(doc(db, 'posts', id, 'reactions', currentUser.uid), {});
+    }
+    async function deletePost(id) {
+      await deleteDoc(doc(db, 'posts', id));
+    }
 
     // PROFILE
-    profileEdit.addEventListener('submit',async e=>{
+    profileEdit.addEventListener('submit', async e => {
       e.preventDefault();
-      let url = currentUser.photoURL;
-      if(avatarInput.files[0]){
-        const snap = await uploadBytes(sRef(storage,`avatars/${currentUser.uid}`),avatarInput.files[0]);
-        url = await getDownloadURL(snap.ref);
-      }
-      await setDoc(doc(db,'users',currentUser.uid),{ avatar:url, bio:bioInput.value },{ merge:true });
-      headerAvatar.src = url;
+      await setDoc(doc(db, 'users', currentUser.uid), { bio: bioInput.value }, { merge: true });
     });
-    async function loadProfile(){
-      const docSnap = await getDoc(doc(db,'users',currentUser.uid));
-      const data = docSnap.data(); bioInput.value = data.bio||'';
+    async function loadProfile() {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      const data = snap.data(); bioInput.value = data.bio || '';
     }
 
     // CHAT
-    function selectChat(u){
+    function selectChat(u) {
       activeUser = u;
       headerName.textContent = u.name;
       headerAvatar.src = u.avatar;
       headerStatus.textContent = 'online';
-      showSection('chat'); chatWindow.innerHTML=''; typingIndicator.style.display='none';
-      if(unsubMsgs) unsubMsgs(); if(unsubTyping) unsubTyping();
-      const chatId = [currentUser.uid,u.uid].sort().join('_');
-      const msgsCol = collection(db,'chats',chatId,'messages');
-      unsubMsgs = onSnapshot(query(msgsCol,orderBy('timestamp')),snap=>{ chatWindow.innerHTML=''; snap.forEach(doc=>appendChatMsg(doc.id,doc.data())); });
-      const typingCol = collection(db,'typing',chatId,'users');
-      unsubTyping = onSnapshot(typingCol,snap=>{ let t=false; snap.forEach(d=>{ if(d.id!==currentUser.uid && d.data().typing) t=true; }); typingIndicator.style.display=t?'block':'none'; });
+      showSection('chat');
+      chatWindow.innerHTML = '';
+      typingIndicator.style.display = 'none';
+      if (unsubMsgs) unsubMsgs();
+      if (unsubTyping) unsubTyping();
+      const chatId = [currentUser.uid, u.uid].sort().join('_');
+      unsubMsgs = onSnapshot(query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp')),
+        snap => { chatWindow.innerHTML = ''; snap.forEach(doc => appendChatMsg(doc.id, doc.data())); });
+      unsubTyping = onSnapshot(collection(db, 'typing', chatId, 'users'), snap => {
+        let t = false; snap.forEach(d => { if (d.id !== currentUser.uid && d.data().typing) t = true; });
+        typingIndicator.style.display = t ? 'block' : 'none';
+      });
     }
-    function appendChatMsg(id,m){
-      const d = document.createElement('div'); d.className='msg '+(m.sender===currentUser.uid?'sent':'recv'); d.textContent=m.text;
-      const s = document.createElement('span'); s.className='status';
-      if(m.sender===currentUser.uid){ s.textContent = m.read?'✓✓':(m.delivered?'✓✓':'✓'); }
-      d.appendChild(s); chatWindow.appendChild(d); chatWindow.scrollTop=chatWindow.scrollHeight;
-      if(m.sender!==currentUser.uid && !m.read){ updateDoc(doc(db,'chats', [currentUser.uid,activeUser.uid].sort().join('_'),'messages',id ),{ delivered:true, read:true }); }
+    function appendChatMsg(id, m) {
+      const d = document.createElement('div'); d.className = 'msg ' + (m.sender === currentUser.uid ? 'sent' : 'recv');
+      d.textContent = m.text;
+      const s = document.createElement('span'); s.className = 'status';
+      if (m.sender === currentUser.uid) { s.textContent = m.read ? '✓✓' : (m.delivered ? '✓✓' : '✓'); }
+      d.appendChild(s); chatWindow.appendChild(d); chatWindow.scrollTop = chatWindow.scrollHeight;
+      if (m.sender !== currentUser.uid && !m.read) {
+        updateDoc(doc(db, 'chats', [currentUser.uid, activeUser.uid].sort().join('_'),
+          'messages', id), { delivered:true, read:true });
+      }
     }
-    // Send chat
-    chatSend.addEventListener('click',sendChat);
-    chatInput.addEventListener('input',()=>setTyping(chatInput.value.trim()!=='') );
-    function sendChat(){ const txt=chatInput.value.trim(); if(!txt||!activeUser) return; const chatId=[currentUser.uid,activeUser.uid].sort().join('_'); addDoc(collection(db,'chats',chatId,'messages'),{ sender:currentUser.uid,text:txt,timestamp:serverTimestamp(),delivered:false,read:false }); chatInput.value=''; setTyping(false);}    
+    function sendChat() {
+      const txt = chatInput.value.trim(); if (!txt || !activeUser) return;
+      const chatId = [currentUser.uid, activeUser.uid].sort().join('_');
+      addDoc(collection(db, 'chats', chatId, 'messages'), {
+        sender: currentUser.uid, text: txt, timestamp: serverTimestamp(),
+        delivered:false, read:false
+      });
+      chatInput.value = ''; setTyping(false);
+    }
+    chatSend.addEventListener('click', sendChat);
+    chatInput.addEventListener('input', () => setTyping(chatInput.value.trim() !== ''));
     let typingTimeout;
-    function setTyping(val){ if(!activeUser) return; const chatId=[currentUser.uid,activeUser.uid].sort().join('_'); const ref = doc(db,'typing',chatId,'users',currentUser.uid); if(val){ setDoc(ref,{ typing:true }); clearTimeout(typingTimeout); typingTimeout=setTimeout(()=>setTyping(false),2000); } else { setDoc(ref,{ typing:false }); }}
-
-  </script></body>
+    function setTyping(v) {
+      if (!activeUser) return;
+      const chatId = [currentUser.uid, activeUser.uid].sort().join('_');
+      const ref = doc(db, 'typing', chatId, 'users', currentUser.uid);
+      if (v) {
+        setDoc(ref, { typing:true });
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(()=>setTyping(false),2000);
+      } else {
+        setDoc(ref, { typing:false });
+      }
+    }
+  </script>
+</body>
 </html>
+
+            
