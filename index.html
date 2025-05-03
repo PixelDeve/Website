@@ -20,14 +20,22 @@
       display: flex;
       flex-direction: column;
       border-right: 1px solid #ddd;
-      transition: transform 0.3s ease;
+      position: fixed;
+      left: -300px;
+      top: 0;
+      height: 100%;
       z-index: 10;
+      transition: transform 0.3s ease;
     }
 
     #main {
       flex: 1;
       display: flex;
       flex-direction: column;
+      margin-left: 0;
+      width: 100%;
+      padding-left: 0;
+      transition: margin-left 0.3s ease;
     }
 
     /* Sidebar content */
@@ -158,21 +166,24 @@
       left: 1rem;
       top: .75rem;
       z-index: 20;
+      cursor: pointer;
     }
 
     /* Responsive */
     @media(max-width: 768px) {
       #hamburger { display: block; }
       #sidebar {
-        position: absolute;
+        position: fixed;
         height: 100%;
-        left: 0;
         top: 0;
-        transform: translateX(-100%);
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        left: -300px;
+        transition: transform 0.3s ease;
       }
       #sidebar.show {
-        transform: translateX(0);
+        left: 0;
+      }
+      #main {
+        margin-left: 0;
       }
     }
   </style>
@@ -270,7 +281,9 @@
     getRedirectResult(auth).catch(console.error);
     loginBtn.addEventListener('click', () => signInWithRedirect(auth, provider));
     signOutBtn.addEventListener('click', () => signOut(auth));
-    hamburger.addEventListener('click', () => sidebar.classList.toggle('show'));
+    hamburger.addEventListener('click', () => {
+      sidebar.classList.toggle('show');
+    });
     clearBtn.addEventListener('click', () => { searchIn.value = ''; renderUsers(); });
     searchIn.addEventListener('input', renderUsers);
 
