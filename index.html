@@ -1,344 +1,277 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth" >
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PiChat Social</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spike — The Next-Gen Social</title>
+  <meta name="description" content="Spike - A beautiful, modern social platform better than Reddit." />
+
+  <!-- TailwindCSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+
   <style>
-    :root {
-      --primary-color: #128c7e;
-      --accent-color: #25d366;
-      --bg-light: #f0f2f5;
-      --bg-dark: #e5ddd5;
-      --text-color: #333;
-      --border-radius: 0.5rem;
-      --transition: 0.3s ease;
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; font-family: Arial, sans-serif; background: var(--bg-dark); color: var(--text-color); }
-    button { cursor: pointer; }
-    /* Login Screen */
-    #login { display: flex; justify-content: center; align-items: center; height: 100vh; }
-    #login button {
-      padding: 0.75rem 1.5rem;
-      background: var(--primary-color);
-      color: #fff;
-      border: none;
-      border-radius: var(--border-radius);
-      font-size: 1rem;
-      transition: background var(--transition);
+    ::-webkit-scrollbar-track {
+      background: #312e81;
     }
-    #login button:hover { background: var(--accent-color); }
-    /* App Layout */
-    #app { display: none; height: 100vh; overflow: hidden; position: relative; }
-    #sidebar {
-      position: fixed;
-      top: 0; left: -250px;
-      width: 80%; max-width: 300px;
-      height: 100%;
-      background: var(--bg-light);
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-      transition: left var(--transition);
-      padding-top: 3rem;
-      z-index: 100;
+    ::-webkit-scrollbar-thumb {
+      background-color: #818cf8;
+      border-radius: 10px;
+      border: 3px solid #312e81;
     }
-    #sidebar.open { left: 0; }
-    #hamburger {
-      position: absolute;
-      top: 1rem; left: 1rem;
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: var(--text-color);
-      z-index: 200;
-      display: block;
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      color: #f9fafb;
+      min-height: 100vh;
     }
-    #signOut {
-      position: absolute;
-      top: 1rem; right: 1rem;
-      background: none;
-      border: none;
-      color: #f44336;
-      font-size: 1rem;
-      z-index: 200;
+    a {
+      transition: all 0.3s ease;
     }
-    #main {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      margin-left: 0;
-      transition: margin-left var(--transition);
-      padding-top: 3rem;
-    }
-    /* Sidebar Content */
-    #sidebar header {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      background: var(--bg-light);
-      display: flex;
-      align-items: center;
-      padding: 0.5rem;
-      border-bottom: 1px solid #ddd;
-    }
-    #search {
-      flex: 1;
-      padding: 0.5rem 1rem;
-      border-radius: var(--border-radius);
-      border: 1px solid #ccc;
-      font-size: 0.9rem;
-    }
-    #clearSearch {
-      margin-left: 0.5rem;
-      background: none;
-      border: none;
-      font-size: 1.2rem;
-    }
-    #users-list { list-style: none; margin-top: 3.5rem; }
-    .user-item {
-      display: flex;
-      align-items: center;
-      padding: 0.75rem 1rem;
-      transition: background var(--transition);
-    }
-    .user-item:hover, .user-item.active { background: #e6e6e6; }
-    .user-item img { width: 40px; height: 40px; border-radius: 50%; margin-right: 0.75rem; }
-    .user-item .name { font-size: 1rem; }
-    /* Chat Header */
-    #main header {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      background: var(--bg-light);
-      padding: 1rem;
-      border-bottom: 1px solid #ddd;
-      z-index: 100;
-    }
-    #main header img { width: 40px; height: 40px; border-radius: 50%; }
-    .info { display: flex; flex-direction: column; }
-    .info .name { font-weight: bold; }
-    .info .status { font-size: 0.85rem; color: #666; }
-    /* Chat Body */
-    #chat-body {
-      flex: 1;
-      margin-top: 4.5rem;
-      margin-bottom: 3.5rem;
-      padding: 1rem;
-      overflow-y: auto;
-      background: var(--bg-dark);
-    }
-    .msg {
-      max-width: 70%;
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      border-radius: var(--border-radius);
-      position: relative;
-      word-wrap: break-word;
-      font-size: 0.95rem;
-    }
-    .sent { background: #dcf8c6; margin-left: auto; }
-    .recv { background: #fff; margin-right: auto; }
-    .ts {
-      font-size: 0.7rem;
-      color: #999;
-      position: absolute;
-      bottom: -1.2rem;
-      right: 0.5rem;
-    }
-    /* Footer Input */
-    #main footer {
-      position: fixed;
-      bottom: 0; left: 0;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      background: var(--bg-light);
-      border-top: 1px solid #ddd;
-      z-index: 100;
-    }
-    #msgInput {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      border-radius: var(--border-radius);
-      border: 1px solid #ccc;
-      font-size: 0.95rem;
-    }
-    #sendBtn {
-      margin-left: 0.5rem;
-      padding: 0.6rem 1.2rem;
-      border-radius: var(--border-radius);
-      background: var(--primary-color);
-      color: #fff;
-      border: none;
-      font-size: 0.95rem;
-      transition: background var(--transition);
-    }
-    #sendBtn:hover { background: var(--accent-color); }
-    /* Responsive Adjustments */
-    @media (min-width: 769px) {
-      #hamburger { display: none; }
-      #sidebar { left: 0; }
-      #main { margin-left: 300px; padding-top: 1rem; }
-      #main header, #main footer { width: calc(100% - 300px); margin-left: 300px; }
+    a:hover {
+      color: #c7d2fe;
     }
   </style>
-</head>
-<body>
-  <div id="login">
-    <button id="loginBtn">Sign in with Google</button>
-  </div>
-  <div id="app">
-    <button id="hamburger">☰</button>
-    <button id="signOut">Sign Out</button>
-    <div id="sidebar">
-      <header>
-        <input id="search" placeholder="Search users…">
-        <button id="clearSearch">×</button>
-      </header>
-      <ul id="users-list"></ul>
-    </div>
-    <div id="main">
-      <header>
-        <img id="chatAvatar" src="" alt="Avatar">
-        <div class="info">
-          <div class="name" id="chatName">Select a user</div>
-          <div class="status" id="chatStatus">offline</div>
-        </div>
-      </header>
-      <div id="chat-body"></div>
-      <footer>
-        <input id="msgInput" placeholder="Type a message…">
-        <button id="sendBtn">Send</button>
-      </footer>
-    </div>
-  </div>
+
+  <!-- Firebase SDKs -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import {
-      getAuth, signInWithRedirect, getRedirectResult,
-      GoogleAuthProvider, onAuthStateChanged, signOut
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import {
-      getFirestore, doc, setDoc, collection,
-      query, orderBy, addDoc, serverTimestamp,
-      onSnapshot, getDocs
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-analytics.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",
       authDomain: "pichat-b1206.firebaseapp.com",
+      databaseURL: "https://pichat-b1206-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "pichat-b1206",
-      storageBucket: "pichat-b1206.appspot.com",
+      storageBucket: "pichat-b1206.firebasestorage.app",
       messagingSenderId: "844622847426",
-      appId: "1:844622847426:web:d76521621977b1d1074a5b"
+      appId: "1:844622847426:web:d76521621977b1d1074a5b",
+      measurementId: "G-20QPP0S27J"
     };
+
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // DOM elements
-    const loginDiv = document.getElementById('login');
-    const appDiv = document.getElementById('app');
+    // Globals
+    let currentUser = null;
+
+    // DOM Elements
     const loginBtn = document.getElementById('loginBtn');
-    const signOutBtn = document.getElementById('signOut');
-    const hamburger = document.getElementById('hamburger');
-    const sidebar = document.getElementById('sidebar');
-    const searchIn = document.getElementById('search');
-    const clearBtn = document.getElementById('clearSearch');
-    const usersList = document.getElementById('users-list');
-    const chatNameEl = document.getElementById('chatName');
-    const chatStatEl = document.getElementById('chatStatus');
-    const chatAvatar = document.getElementById('chatAvatar');
-    const chatBody = document.getElementById('chat-body');
-    const msgIn = document.getElementById('msgInput');
-    const sendBtn = document.getElementById('sendBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userDisplay = document.getElementById('userDisplay');
+    const postForm = document.getElementById('postForm');
+    const postInput = document.getElementById('postInput');
+    const postFeed = document.getElementById('postFeed');
+    const loadingSpinner = document.getElementById('loadingSpinner');
 
-    let currentUser, activeUser, unsubscribe;
-    let allUsers = [];
+    // Sign in function
+    async function signIn() {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        alert('Login failed: ' + error.message);
+      }
+    }
 
-    onAuthStateChanged(auth, user => {
+    // Sign out function
+    async function signUserOut() {
+      await signOut(auth);
+    }
+
+    // Render user info on UI
+    function renderUser(user) {
       if (user) {
         currentUser = user;
-        loginDiv.style.display = 'none';
-        appDiv.style.display = 'flex';
-        setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          name: user.displayName,
-          avatar: user.photoURL
-        }, { merge: true });
-        loadUsers();
+        userDisplay.textContent = `Hello, ${user.displayName}`;
+        loginBtn.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+        postForm.classList.remove('hidden');
+        loadPosts();
       } else {
-        loginDiv.style.display = 'flex';
-        appDiv.style.display = 'none';
+        currentUser = null;
+        userDisplay.textContent = '';
+        loginBtn.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+        postForm.classList.add('hidden');
+        postFeed.innerHTML = `<p class="text-center text-gray-300 mt-10">Please log in to see and add posts.</p>`;
       }
-    });
-    getRedirectResult(auth).catch(console.error);
-
-    loginBtn.addEventListener('click', () => signInWithRedirect(auth, provider));
-    signOutBtn.addEventListener('click', () => signOut(auth));
-    hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
-    clearBtn.addEventListener('click', () => { searchIn.value = ''; renderUsers(); });
-    searchIn.addEventListener('input', renderUsers);
-
-    async function loadUsers() {
-      const snap = await getDocs(collection(db, 'users'));
-      allUsers = snap.docs.map(d => d.data());
-      renderUsers();
     }
-    function renderUsers() {
-      usersList.innerHTML = '';
-      allUsers.filter(u => u.uid !== currentUser.uid)
-        .filter(u => u.name.toLowerCase().includes(searchIn.value.trim().toLowerCase()))
-        .forEach(u => {
-          const li = document.createElement('li');
-          li.className = 'user-item' + (activeUser?.uid === u.uid ? ' active' : '');
-          li.innerHTML = `<img src="${u.avatar}" alt=""><span class="name">${u.name}</span>`;
-          li.onclick = () => selectUser(u);
-          usersList.append(li);
+
+    // Listen to auth state
+    onAuthStateChanged(auth, (user) => {
+      renderUser(user);
+    });
+
+    // Load posts from Firestore
+    async function loadPosts() {
+      loadingSpinner.classList.remove('hidden');
+      postFeed.innerHTML = ''; // Clear current feed
+
+      try {
+        const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          postFeed.innerHTML = '<p class="text-center text-gray-300 mt-10">No posts yet — be the first to post!</p>';
+          loadingSpinner.classList.add('hidden');
+          return;
+        }
+
+        querySnapshot.forEach(docSnap => {
+          const post = docSnap.data();
+          postFeed.appendChild(createPostElement(docSnap.id, post));
         });
+      } catch (e) {
+        postFeed.innerHTML = `<p class="text-red-400 text-center mt-10">Failed to load posts: ${e.message}</p>`;
+      }
+      loadingSpinner.classList.add('hidden');
     }
-    function selectUser(user) {
-      activeUser = user;
-      chatNameEl.textContent = user.name;
-      chatStatEl.textContent = 'online';
-      chatAvatar.src = user.avatar;
-      chatBody.innerHTML = '';
-      if (unsubscribe) unsubscribe();
-      const chatId = [currentUser.uid, user.uid].sort().join('_');
-      const chatRef = collection(db, 'chats', chatId, 'messages');
-      const q = query(chatRef, orderBy('timestamp'));
-      unsubscribe = onSnapshot(q, snap => {
-        chatBody.innerHTML = '';
-        snap.forEach(doc => appendMessage(doc.data()));
-      });
-      sidebar.classList.remove('open');
+
+    // Create post HTML element
+    function createPostElement(id, post) {
+      const el = document.createElement('article');
+      el.className = "bg-indigo-700 rounded-lg shadow-lg p-6 mb-6 hover:bg-indigo-600 transition-colors";
+      el.innerHTML = `
+        <header class="flex items-center justify-between mb-2">
+          <h3 class="text-xl font-semibold text-white">${escapeHtml(post.content)}</h3>
+        </header>
+        <div class="text-gray-300 text-sm mb-3">
+          <span>by <strong>${escapeHtml(post.authorName)}</strong></span> · 
+          <span>${post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : 'just now'}</span>
+        </div>
+        <footer class="flex items-center justify-between text-sm text-gray-400">
+          <button class="upvoteBtn flex items-center space-x-1 hover:text-indigo-300 focus:outline-none" data-id="${id}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-current" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M3 10h4v6h6v-6h4l-7-7-7 7z" />
+            </svg>
+            <span class="upvoteCount">${post.upvotes || 0}</span>
+          </button>
+          <button class="commentBtn flex items-center space-x-1 hover:text-indigo-300 focus:outline-none" data-id="${id}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-current" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.387 8.387 0 01-3.533-.74l-3.033.805a.5.5 0 01-.66-.66l.805-3.034A8.38 8.38 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM8 8a1 1 0 100 2 1 1 0 000-2zm2 0a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
+            </svg>
+            <span>${post.commentsCount || 0}</span>
+          </button>
+        </footer>
+      `;
+
+      // Upvote event
+      el.querySelector('.upvoteBtn').addEventListener('click', () => upvotePost(id));
+      // Placeholder comment event
+      el.querySelector('.commentBtn').addEventListener('click', () => alert('Comments coming soon!'));
+
+      return el;
     }
-    function appendMessage(msg) {
-      const div = document.createElement('div');
-      div.className = `msg ${msg.sender === currentUser.uid ? 'sent' : 'recv'}`;
-      div.textContent = msg.text;
-      const ts = document.createElement('div');
-      ts.className = 'ts';
-      ts.textContent = msg.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      div.append(ts);
-      chatBody.append(div);
-      chatBody.scrollTop = chatBody.scrollHeight;
+
+    // Escape HTML to prevent injection
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
     }
-    sendBtn.addEventListener('click', async () => {
-      const text = msgIn.value.trim();
-      if (!text || !activeUser) return;
-      const chatId = [currentUser.uid, activeUser.uid].sort().join('_');
-      await addDoc(collection(db, 'chats', chatId, 'messages'), {
-        sender: currentUser.uid,
-        text,
-        timestamp: serverTimestamp()
-      });
-      msgIn.value = '';
+
+    // Add new post
+    postForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const content = postInput.value.trim();
+      if (!content) return alert('Post content cannot be empty.');
+
+      postForm.querySelector('button').disabled = true;
+      try {
+        await addDoc(collection(db, "posts"), {
+          content,
+          authorName: currentUser.displayName,
+          authorId: currentUser.uid,
+          createdAt: serverTimestamp(),
+          upvotes: 0,
+          commentsCount: 0
+        });
+        postInput.value = '';
+        loadPosts();
+      } catch (e) {
+        alert('Failed to add post: ' + e.message);
+      }
+      postForm.querySelector('button').disabled = false;
     });
+
+    // Upvote post
+    async function upvotePost(postId) {
+      if (!currentUser) return alert('Please log in to upvote.');
+      try {
+        const postRef = doc(db, "posts", postId);
+        await updateDoc(postRef, { upvotes: increment(1) });
+        loadPosts();
+      } catch (e) {
+        alert('Failed to upvote: ' + e.message);
+      }
+    }
+
+    // Attach login/logout events
+    window.addEventListener('DOMContentLoaded', () => {
+      loginBtn.addEventListener('click', signIn);
+      logoutBtn.addEventListener('click', signUserOut);
+    });
+
   </script>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-indigo-800 shadow-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+      <a href="#" class="text-white text-3xl font-bold select-none">Spike</a>
+
+      <div class="flex items-center space-x-4">
+        <p id="userDisplay" class="text-indigo-200 font-medium select-text"></p>
+        <button id="loginBtn" class="bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-md font-semibold transition">Sign In</button>
+        <button id="logoutBtn" class="hidden bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md font-semibold transition">Sign Out</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow max-w-4xl mx-auto p-6 space-y-8">
+    
+    <!-- Post creation form -->
+    <form id="postForm" class="hidden bg-indigo-700 p-6 rounded-lg shadow-lg flex flex-col space-y-4" autocomplete="off" aria-label="Create a post">
+      <textarea id="postInput" rows="4" placeholder="What's on your mind?" class="resize-none rounded-md p-3 bg-indigo-600 border border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white font-medium" required></textarea>
+      <button type="submit" class="self-end bg-indigo-500 hover:bg-indigo-600 px-6 py-2 rounded-md font-semibold transition">Post</button>
+    </form>
+
+    <!-- Loading spinner -->
+    <div id="loadingSpinner" class="hidden flex justify-center items-center space-x-2 text-indigo-300">
+      <svg class="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+      <span>Loading posts...</span>
+    </div>
+
+    <!-- Posts feed -->
+    <section id="postFeed" aria-live="polite" aria-relevant="additions" class="space-y-6 select-text">
+      <p class="text-center text-gray-300 mt-10">Please log in to see and add posts.</p>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-indigo-800 py-6 text-center text-indigo-300 font-light select-none">
+    &copy; 2025 Spike - Crafted with ❤️ by You
+  </footer>
+
 </body>
 </html>
