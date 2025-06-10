@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" >
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,18 +8,13 @@
 
   <!-- TailwindCSS CDN -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  
   <!-- Google Fonts: Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
 
   <style>
     /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 10px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #312e81;
-    }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #312e81; }
     ::-webkit-scrollbar-thumb {
       background-color: #818cf8;
       border-radius: 10px;
@@ -44,15 +39,16 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-analytics.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy,
+      serverTimestamp, doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
-    // Firebase config
+    // Firebase config (unchanged)
     const firebaseConfig = {
       apiKey: "AIzaSyAPbvxBU0PYdgrHdHKCeqNAdiX0f-BdftY",
       authDomain: "pichat-b1206.firebaseapp.com",
       databaseURL: "https://pichat-b1206-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "pichat-b1206",
-      storageBucket: "pichat-b1206.firebasestorage.app",
+      storageBucket: "pichat-b1206.appspot.com",
       messagingSenderId: "844622847426",
       appId: "1:844622847426:web:d76521621977b1d1074a5b",
       measurementId: "G-20QPP0S27J"
@@ -65,10 +61,7 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // Globals
     let currentUser = null;
-
-    // DOM Elements
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const userDisplay = document.getElementById('userDisplay');
@@ -77,21 +70,15 @@
     const postFeed = document.getElementById('postFeed');
     const loadingSpinner = document.getElementById('loadingSpinner');
 
-    // Sign in function
     async function signIn() {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        alert('Login failed: ' + error.message);
-      }
+      try { await signInWithPopup(auth, provider); }
+      catch (err) { alert('Login failed: ' + err.message); }
     }
 
-    // Sign out function
     async function signUserOut() {
       await signOut(auth);
     }
 
-    // Render user info on UI
     function renderUser(user) {
       if (user) {
         currentUser = user;
@@ -110,26 +97,21 @@
       }
     }
 
-    // Listen to auth state
-    onAuthStateChanged(auth, (user) => {
-      renderUser(user);
-    });
+    onAuthStateChanged(auth, user => renderUser(user));
 
-    // Load posts from Firestore
     async function loadPosts() {
       loadingSpinner.classList.remove('hidden');
-      postFeed.innerHTML = ''; // Clear current feed
+      postFeed.innerHTML = '';
 
       try {
         const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
+        const snap = await getDocs(q);
+        if (snap.empty) {
           postFeed.innerHTML = '<p class="text-center text-gray-300 mt-10">No posts yet — be the first to post!</p>';
           loadingSpinner.classList.add('hidden');
           return;
         }
-
-        querySnapshot.forEach(docSnap => {
+        snap.forEach(docSnap => {
           const post = docSnap.data();
           postFeed.appendChild(createPostElement(docSnap.id, post));
         });
@@ -139,56 +121,86 @@
       loadingSpinner.classList.add('hidden');
     }
 
-    // Create post HTML element
     function createPostElement(id, post) {
       const el = document.createElement('article');
       el.className = "bg-indigo-700 rounded-lg shadow-lg p-6 mb-6 hover:bg-indigo-600 transition-colors";
       el.innerHTML = `
         <header class="flex items-center justify-between mb-2">
-          <h3 class="text-xl font-semibold text-white">${escapeHtml(post.content)}</h3>
+          <h3 class="text-lg sm:text-xl font-semibold text-white">${escapeHtml(post.content)}</h3>
         </header>
         <div class="text-gray-300 text-sm mb-3">
-          <span>by <strong>${escapeHtml(post.authorName)}</strong></span> · 
+          <span>by <strong>${escapeHtml(post.authorName)}</strong></span> ·
           <span>${post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : 'just now'}</span>
         </div>
         <footer class="flex items-center justify-between text-sm text-gray-400">
           <button class="upvoteBtn flex items-center space-x-1 hover:text-indigo-300 focus:outline-none" data-id="${id}">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-current" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M3 10h4v6h6v-6h4l-7-7-7 7z" />
-            </svg>
-            <span class="upvoteCount">${post.upvotes || 0}</span>
+            👍 <span class="upvoteCount">${post.upvotes || 0}</span>
           </button>
           <button class="commentBtn flex items-center space-x-1 hover:text-indigo-300 focus:outline-none" data-id="${id}">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 fill-current" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.387 8.387 0 01-3.533-.74l-3.033.805a.5.5 0 01-.66-.66l.805-3.034A8.38 8.38 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM8 8a1 1 0 100 2 1 1 0 000-2zm2 0a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
-            </svg>
-            <span>${post.commentsCount || 0}</span>
+            💬 <span>${post.commentsCount || 0}</span>
           </button>
         </footer>
-      `;
+        <div class="comments space-y-2 mt-2"></div>
+        <form class="commentForm hidden mt-2 flex space-x-2">
+          <input type="text" class="flex-grow p-2 rounded bg-indigo-600 border border-indigo-500 text-white" placeholder="Write a comment..." />
+          <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-2 rounded font-semibold">Send</button>
+        </form>`;
 
-      // Upvote event
       el.querySelector('.upvoteBtn').addEventListener('click', () => upvotePost(id));
-      // Placeholder comment event
-      el.querySelector('.commentBtn').addEventListener('click', () => alert('Comments coming soon!'));
-
+      el.querySelector('.commentBtn').addEventListener('click', () => toggleCommentForm(el));
+      el.querySelector('.commentForm').addEventListener('submit', e => submitComment(e, id));
       return el;
     }
 
-    // Escape HTML to prevent injection
-    function escapeHtml(text) {
-  if (typeof text !== 'string') {
-    text = '';
-  }
-  return text.replace(/&/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/"/g, "&quot;")
-             .replace(/'/g, "&#039;");
+    function toggleCommentForm(el) {
+      el.querySelector('.commentForm').classList.toggle('hidden');
     }
 
-    // Add new post
-    postForm.addEventListener('submit', async (e) => {
+    async function submitComment(e, postId) {
+      e.preventDefault();
+      const form = e.target;
+      const input = form.querySelector('input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      try {
+        const postRef = doc(db, "posts", postId);
+        await updateDoc(postRef, {
+          comments: arrayUnion({
+            text,
+            author: currentUser.displayName,
+            createdAt: new Date().toISOString()
+          }),
+          commentsCount: increment(1),
+        });
+        input.value = '';
+        loadPosts();
+      } catch (err) {
+        alert('Failed to add comment: ' + err.message);
+      }
+    }
+
+    async function upvotePost(postId) {
+      if (!currentUser) return alert('Please log in to upvote.');
+      try {
+        const postRef = doc(db, "posts", postId);
+        await updateDoc(postRef, { upvotes: increment(1) });
+        loadPosts();
+      } catch (err) {
+        alert('Failed to upvote: ' + err.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      if (typeof text !== 'string') text = '';
+      return text.replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+    }
+
+    postForm.addEventListener('submit', async e => {
       e.preventDefault();
       const content = postInput.value.trim();
       if (!content) return alert('Post content cannot be empty.');
@@ -201,44 +213,27 @@
           authorId: currentUser.uid,
           createdAt: serverTimestamp(),
           upvotes: 0,
-          commentsCount: 0
+          commentsCount: 0,
+          comments: []
         });
         postInput.value = '';
         loadPosts();
-      } catch (e) {
-        alert('Failed to add post: ' + e.message);
+      } catch (err) {
+        alert('Failed to add post: ' + err.message);
       }
       postForm.querySelector('button').disabled = false;
     });
 
-    // Upvote post
-    async function upvotePost(postId) {
-      if (!currentUser) return alert('Please log in to upvote.');
-      try {
-        const postRef = doc(db, "posts", postId);
-        await updateDoc(postRef, { upvotes: increment(1) });
-        loadPosts();
-      } catch (e) {
-        alert('Failed to upvote: ' + e.message);
-      }
-    }
-
-    // Attach login/logout events
     window.addEventListener('DOMContentLoaded', () => {
       loginBtn.addEventListener('click', signIn);
       logoutBtn.addEventListener('click', signUserOut);
     });
-
   </script>
 </head>
-
 <body class="flex flex-col min-h-screen">
-
-  <!-- Navbar -->
   <nav class="bg-indigo-800 shadow-md sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div class="max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
       <a href="#" class="text-white text-3xl font-bold select-none">Spike</a>
-
       <div class="flex items-center space-x-4">
         <p id="userDisplay" class="text-indigo-200 font-medium select-text"></p>
         <button id="loginBtn" class="bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-md font-semibold transition">Sign In</button>
@@ -247,16 +242,12 @@
     </div>
   </nav>
 
-  <!-- Main Content -->
-  <main class="flex-grow max-w-4xl mx-auto p-6 space-y-8">
-    
-    <!-- Post creation form -->
-    <form id="postForm" class="hidden bg-indigo-700 p-6 rounded-lg shadow-lg flex flex-col space-y-4" autocomplete="off" aria-label="Create a post">
+  <main class="flex-grow w-full max-w-4xl mx-auto p-4 sm:p-6 space-y-8">
+    <form id="postForm" class="hidden bg-indigo-700 p-4 sm:p-6 rounded-lg shadow-lg flex flex-col space-y-4" autocomplete="off" aria-label="Create a post">
       <textarea id="postInput" rows="4" placeholder="What's on your mind?" class="resize-none rounded-md p-3 bg-indigo-600 border border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white font-medium" required></textarea>
       <button type="submit" class="self-end bg-indigo-500 hover:bg-indigo-600 px-6 py-2 rounded-md font-semibold transition">Post</button>
     </form>
 
-    <!-- Loading spinner -->
     <div id="loadingSpinner" class="hidden flex justify-center items-center space-x-2 text-indigo-300">
       <svg class="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -265,16 +256,13 @@
       <span>Loading posts...</span>
     </div>
 
-    <!-- Posts feed -->
     <section id="postFeed" aria-live="polite" aria-relevant="additions" class="space-y-6 select-text">
       <p class="text-center text-gray-300 mt-10">Please log in to see and add posts.</p>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="bg-indigo-800 py-6 text-center text-indigo-300 font-light select-none">
-    &copy; 2025 Spike - Crafted with ❤️ by You
+    &copy; 2025 Spike — Crafted with ❤️ by You
   </footer>
-
 </body>
 </html>
