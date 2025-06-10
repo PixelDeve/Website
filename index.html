@@ -1,53 +1,62 @@
-<!DOCTYPE html><html lang="en" class="scroll-smooth">
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Spike — The Next-Gen Social</title>
-  <meta name="description" content="Spike - A beautiful, modern social platform better than Reddit." />  <!-- TailwindCSS CDN -->  <script src="https://cdn.tailwindcss.com"></script>  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { primary: '#4f46e5', secondary: '#4338ca' }
-        }
-      }
-    }
-  </script>  <!-- Google Fonts: Poppins -->  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
-  <style>body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); min-height:100vh; color:#f9fafb; }</style>
+  <title>Spike — Reddit-style Social</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #f3f4f6; color: #111; }
+    .scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 #f3f4f6; }
+    .scrollbar::-webkit-scrollbar { width: 8px; }
+    .scrollbar::-webkit-scrollbar-track { background: #f3f4f6; }
+    .scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
 </head>
 <body class="flex flex-col min-h-screen">
   <!-- Navbar -->
-  <nav class="bg-primary shadow-md sticky top-0 z-50">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-      <a href="#" class="text-white text-2xl font-bold">Spike</a>
-      <div class="flex items-center space-x-3">
-        <p id="userDisplay" class="text-indigo-200"></p>
-        <button id="loginBtn" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded">Sign In</button>
-        <button id="logoutBtn" class="hidden bg-red-500 hover:bg-red-600 px-3 py-1 rounded">Sign Out</button>
+  <nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex justify-between items-center">
+      <span class="text-2xl font-bold">Spike</span>
+      <div>
+        <span id="userDisplay" class="mr-4 text-gray-700"></span>
+        <button id="loginBtn" class="bg-indigo-600 text-white px-4 py-1 rounded">Login</button>
+        <button id="logoutBtn" class="hidden bg-red-500 text-white px-4 py-1 rounded">Logout</button>
       </div>
     </div>
-  </nav>  <!-- Main -->  <main class="flex-grow max-w-4xl mx-auto p-4 space-y-6 w-full">
-    <!-- New Post -->
-    <div id="postForm" class="hidden bg-indigo-700 p-4 rounded-lg shadow-lg">
-      <textarea id="postInput" rows="3" placeholder="What's on your mind?" class="w-full p-2 rounded bg-indigo-600 text-white"></textarea>
-      <div class="mt-2 text-right">
-        <button id="submitPost" class="bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded">Post</button>
-      </div>
-    </div><!-- Feed -->
-<div id="postFeed" class="space-y-6">
-  <p class="text-center text-gray-300">Please log in to view posts.</p>
-</div>
+  </nav>
 
-  </main>  <!-- Footer -->  <footer class="bg-primary py-4 text-center text-indigo-200">© 2025 Spike</footer>  <!-- Firebase SDK -->  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
-    import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
-    
-    const firebaseConfig = { /* your config */ };
+  <!-- Content -->
+  <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
+    <!-- Create / Edit Post -->
+    <form id="postForm" class="hidden bg-white p-4 rounded shadow flex flex-col space-y-2">
+      <textarea id="postInput" rows="3" placeholder="What’s on your mind?" class="border p-2 rounded focus:outline-none"></textarea>
+      <div class="flex justify-end space-x-2">
+        <button type="submit" class="bg-indigo-600 text-white px-4 py-1 rounded">Post</button>
+        <button id="cancelEdit" type="button" class="bg-gray-300 text-gray-700 px-4 py-1 rounded hidden">Cancel</button>
+      </div>
+    </form>
+
+    <!-- Posts -->
+    <div id="postFeed" class="space-y-4 scrollbar"></div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white p-4 text-center text-gray-500">© 2025 Spike</footer>
+
+  <!-- Firebase + Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+
+    const firebaseConfig = { /* YOUR FIREBASE CONFIG */ };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
     let currentUser = null;
+    let editPostId = null;
 
     // Elements
     const loginBtn = document.getElementById('loginBtn');
@@ -55,12 +64,12 @@
     const userDisplay = document.getElementById('userDisplay');
     const postForm = document.getElementById('postForm');
     const postInput = document.getElementById('postInput');
-    const submitPost = document.getElementById('submitPost');
+    const cancelEdit = document.getElementById('cancelEdit');
     const postFeed = document.getElementById('postFeed');
 
-    // Auth
-    loginBtn.onclick = async () => { try { await signInWithPopup(auth, provider); } catch (e) { alert(e.message) }};
+    loginBtn.onclick = () => signInWithPopup(auth, provider);
     logoutBtn.onclick = () => signOut(auth);
+
     onAuthStateChanged(auth, user => {
       currentUser = user;
       userDisplay.textContent = user ? `Hello, ${user.displayName}` : '';
@@ -70,54 +79,94 @@
       loadPosts();
     });
 
-    // Load posts
-    async function loadPosts() {
-      postFeed.innerHTML = '';
-      const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-      const snap = await getDocs(q);
-      if (snap.empty) postFeed.innerHTML = '<p class="text-center text-gray-300">No posts yet.</p>';
-      snap.forEach(docSnap => postFeed.append(createPostElement(docSnap.id, docSnap.data())));
+    postForm.onsubmit = async e => {
+      e.preventDefault();
+      const text = postInput.value.trim();
+      if (!text) return;
+      if (editPostId) {
+        await updateDoc(doc(db, 'posts', editPostId), { content: text });
+      } else {
+        await addDoc(collection(db, 'posts'), { content: text, author: currentUser.displayName, authorId: currentUser.uid, createdAt: serverTimestamp(), comments: [] });
+      }
+      resetForm();
+      loadPosts();
+    };
+
+    cancelEdit.onclick = resetForm;
+
+    function resetForm() {
+      postInput.value = '';
+      editPostId = null;
+      cancelEdit.classList.add('hidden');
     }
 
-    function createPostElement(id, data) {
+    async function loadPosts() {
+      postFeed.innerHTML = '<p class="text-center text-gray-600">Loading...</p>';
+      const snap = await getDocs(query(collection(db, 'posts'), orderBy('createdAt', 'desc')));
+      postFeed.innerHTML = '';
+      snap.forEach(docSnap => postFeed.appendChild(renderPost(docSnap.id, docSnap.data())));
+    }
+
+    function renderPost(id, post) {
       const card = document.createElement('div');
-      card.className = 'bg-indigo-700 p-4 rounded-lg shadow relative';
-      // Content
-      card.innerHTML = `
-        <p class="text-white mb-2">${escape(data.content)}</p>
-        <div class="text-gray-300 text-sm mb-2">by <strong>${escape(data.authorName)}</strong> · ${data.createdAt?.seconds ? new Date(data.createdAt.seconds*1000).toLocaleString() : ''}</div>
-        <div class="flex space-x-2 text-sm">
-          <button class="upvoteBtn">▲ ${data.upvotes||0}</button>
-          <button class="toggleCommentsBtn">💬 ${data.commentsCount||0}</button>
-        </div>
-      `;
-      // Owner controls
-      if (currentUser.uid === data.authorId) {
-        const ctrl = document.createElement('div'); ctrl.className='absolute top-2 right-2 flex space-x-1';
-        ctrl.innerHTML = `<button data-id="${id}" class="editPost">✏️</button><button data-id="${id}" class="delPost">🗑️</button>`;
-        card.append(ctrl);
+      card.className = 'bg-white p-4 rounded shadow space-y-2';
+
+      const header = document.createElement('div');
+      header.className = 'flex justify-between items-center';
+      const author = document.createElement('div');
+      author.innerHTML = `<span class="font-semibold">${post.author}</span> • <span class="text-sm text-gray-500">${post.createdAt?.seconds ? new Date(post.createdAt.seconds*1000).toLocaleString() : 'Just now'}</span>`;
+      header.appendChild(author);
+      if (currentUser && currentUser.uid === post.authorId) {
+        const controls = document.createElement('div');
+        controls.innerHTML = `<button class="text-blue-600 mr-2">Edit</button><button class="text-red-600">Delete</button>`;
+        controls.children[0].onclick = () => startEdit(id, post.content);
+        controls.children[1].onclick = () => deleteDoc(doc(db, 'posts', id)).then(loadPosts);
+        header.appendChild(controls);
       }
-      // Events
-      card.querySelector('.toggleCommentsBtn').onclick = () => toggleComments(id, card);
-      card.querySelectorAll('.delPost').forEach(b=>b.onclick=()=>deletePost(b.dataset.id));
-      card.querySelectorAll('.editPost').forEach(b=>editPost(id, data, card));
-      card.querySelector('.upvoteBtn').onclick = () => upvote(id);
+      card.appendChild(header);
+
+      const content = document.createElement('p');
+      content.className = 'whitespace-pre-wrap';
+      content.textContent = post.content;
+      card.appendChild(content);
+
+      const commentSection = document.createElement('div');
+      commentSection.className = 'mt-4 space-y-2';
+      const addCommentBtn = document.createElement('button');
+      addCommentBtn.className = 'text-indigo-600';
+      addCommentBtn.textContent = 'Add comment';
+      addCommentBtn.onclick = () => addComment(id);
+      commentSection.appendChild(addCommentBtn);
+
+      (post.comments || []).forEach(c => {
+        const comDiv = document.createElement('div');
+        comDiv.className = 'bg-gray-100 p-2 rounded';
+        comDiv.innerHTML = `<span class="font-semibold">${c.author}</span>: ${c.text}`;
+        commentSection.appendChild(comDiv);
+      });
+
+      card.appendChild(commentSection);
       return card;
     }
 
-    // CRUD
-    submitPost.onclick = async () => {
-      if (!postInput.value.trim()) return;
-      await addDoc(collection(db,'posts'),{ content:postInput.value, authorName:currentUser.displayName, authorId:currentUser.uid, createdAt:serverTimestamp(), upvotes:0, commentsCount:0 });
-      postInput.value=''; loadPosts();
-    };
-    async function deletePost(id){ await deleteDoc(doc(db,'posts',id)); loadPosts(); }
-    async function editPost(id,data,card){ card.innerHTML+=`<div class="mt-2"><textarea class="w-full p-2 rounded bg-indigo-600 text-white">${escape(data.content)}</textarea><button class="mt-1 bg-indigo-500 px-2 py-1 rounded">Save</button></div>`; card.querySelector('button').onclick=async()=>{ await updateDoc(doc(db,'posts',id),{content:card.querySelector('textarea').value}); loadPosts(); }}// upvote, comments logic omitted for brevity
+    function startEdit(id, text) {
+      editPostId = id;
+      postInput.value = text;
+      cancelEdit.classList.remove('hidden');
+      postInput.focus();
+    }
 
-function escape(str){ return str.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
-
-// Placeholder for comments/replies: implement toggleComments/upvote/etc.
-
+    async function addComment(postId) {
+      const txt = prompt('Your comment:');
+      if (!txt) return;
+      const postRef = doc(db, 'posts', postId);
+      const snap = await getDocs(query(collection(db, 'posts')));
+      const data = (await getDocs(postRef)).data();
+      const comments = data.comments || [];
+      comments.push({ author: currentUser.displayName, text: txt });
+      await updateDoc(postRef, { comments });
+      loadPosts();
+    }
   </script>
 </body>
 </html>
