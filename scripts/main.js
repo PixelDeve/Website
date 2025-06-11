@@ -1,6 +1,6 @@
 // scripts/main.js
-import { initializeFirebase } from '../modules/firebase.js';
-import { loadPosts, handleNewPost, loadSinglePost } from '../modules/posts.js';
+import { initializeFirebase } from './modules/firebase.js';
+import { loadPosts, handleNewPost, loadSinglePost } from './modules/posts.js';
 
 // Initialize Firebase
 initializeFirebase();
