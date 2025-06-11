@@ -1,3 +1,5 @@
+// modules/firebase.js
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
