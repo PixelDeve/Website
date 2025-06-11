@@ -1,12 +1,13 @@
-// Import Firebase modules and initialize
-import { initializeFirebase, auth, db, provider } from './modules/firebase.js';
-import { setupAuthUI } from './modules/auth.js';
-import { loadPosts, handleNewPost } from './modules/posts.js';
+// main.js
 
+import { initializeFirebase } from './modules/firebase.js';
+import { loadPosts, handleNewPost } from './modules/post.js';
+
+// Initialize Firebase
 initializeFirebase();
-setupAuthUI(auth, provider);
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadPosts();
+// Load posts when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+  loadPosts();
   handleNewPost();
 });
