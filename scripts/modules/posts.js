@@ -1,7 +1,16 @@
+// modules/post.js
+
 import { db } from './firebase.js';
 import {
-  collection, addDoc, getDocs, query, orderBy,
-  serverTimestamp, doc, updateDoc, increment
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  orderBy,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  increment
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
 const postFeed = document.getElementById('postFeed');
@@ -62,7 +71,6 @@ function createPostElement(id, post) {
     </div>
   `;
 
-  // Add event listeners...
   el.querySelector('.upvoteBtn').addEventListener('click', () => vote(id, 'upvotes'));
   el.querySelector('.downvoteBtn').addEventListener('click', () => vote(id, 'downvotes'));
   el.querySelector('.commentBtn').addEventListener('click', () => openComments(id));
@@ -97,4 +105,4 @@ function sharePost(postId) {
   navigator.clipboard.writeText(url)
     .then(() => alert('Link copied to clipboard!'))
     .catch(err => alert('Failed to copy link.'));
-      }
+}
