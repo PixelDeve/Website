@@ -4,41 +4,59 @@ import { initializeFirebase, auth, provider } from './modules/firebase.js';
 import { loadPosts, handleNewPost } from './modules/posts.js';
 import {
   signInWithPopup,
+  signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 
 // Initialize Firebase
 initializeFirebase();
 
-// Load posts when the page loads
 document.addEventListener('DOMContentLoaded', () => {
   loadPosts();
   handleNewPost();
 
-  const signInBtn = document.getElementById('signInBtn');
-  if (signInBtn) {
-    signInBtn.addEventListener('click', async () => {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        console.log('Signed in as:', user.displayName);
-        signInBtn.style.display = 'none'; // Hide the sign-in button after successful sign-in
-        alert(`Signed in as ${user.displayName}`);
-      } catch (error) {
-        console.error('Sign-in failed:', error);
-        alert('Sign-in failed. Please check console.');
-      }
-    });
-  }
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const postForm = document.getElementById('postForm');
+  const postFeed = document.getElementById('postFeed');
+  const userDisplay = document.getElementById('userDisplay');
 
-  // Automatically check authentication state
+  // Handle login button
+  loginBtn.addEventListener('click', async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error('Sign-in failed:', error);
+      alert('Sign-in failed. Please check console.');
+    }
+  });
+
+  // Handle logout button
+  logoutBtn.addEventListener('click', async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Sign-out failed:', error);
+      alert('Sign-out failed. Please check console.');
+    }
+  });
+
+  // Monitor authentication state
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      console.log('User is signed in:', user.displayName);
-      if (signInBtn) signInBtn.style.display = 'none'; // Hide button if already signed in
+      // User signed in
+      loginBtn.classList.add('hidden');
+      logoutBtn.classList.remove('hidden');
+      userDisplay.textContent = `Welcome, ${user.displayName}!`;
+      postForm.classList.remove('hidden');
+      loadPosts();
     } else {
-      console.log('No user is signed in.');
-      if (signInBtn) signInBtn.style.display = 'block'; // Show button if no user is signed in
+      // User signed out
+      loginBtn.classList.remove('hidden');
+      logoutBtn.classList.add('hidden');
+      userDisplay.textContent = '';
+      postForm.classList.add('hidden');
+      postFeed.innerHTML = `<p class="text-center text-gray-500 mt-10">Please log in to see and add posts.</p>`;
     }
   });
 });
