@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniRate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Use Inter font for a clean, modern look -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Professional Light Theme Base */
+        body {
+            background-color: #f1f5f9; /* Slate-100/Light Gray for subtle depth */
+            color: #1e293b; /* Slate-800 for high contrast text */
+        }
+
+        /* Custom scrollbar for a sleek look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        
+        /* Style range input for a cleaner look */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4f46e5; /* Indigo */
+            cursor: pointer;
+            box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px rgba(79, 70, 229, 0.4);
+            transition: background .15s ease-in-out;
+        }
+        input[type="range"]::-webkit-slider-thumb:active {
+            box-shadow: 0 0 0 3px #ffffff, 0 0 0 6px #4f46e5;
+        }
+
+        /* Card elevation style */
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Firebase Imports and Core Logic (CRITICAL: MUST BE FIRST) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, limit, serverTimestamp, getDoc, setLogLevel, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'global-rater-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth, userId;
+        window.isAuthReady = false;
+        window.isAdminLoggedIn = false; 
+
+        setLogLevel('Debug');
+
+        // --- GLOBAL CONSTANTS AND DATA ---
+        const CATEGORIES = [
+            { id: 'human', name: 'Humans', icon: '👤' },
+            { id: 'animal', name: 'Animals & Pets', icon: '🐾' },
+            { id: 'food', name: 'Food & Recipes', icon: '🍕' },
+            { id: 'tech', name: 'Technology', icon: '💻' },
+            { id: 'media', name: 'Movies & Media', icon: '🎬' },
+            { id: 'concept', name: 'Concepts & Ideas', icon: '💡' }
+        ];
+
+        // List of prohibited words (can be extended)
+        const BAD_WORDS = ['crap', 'stupid', 'idiot', 'damn', 'profanity1', 'profanity2']; 
+        
+        // Regex to detect common phone numbers and simple street addresses
+        const PRIVACY_REGEX = /((?:\+?\d{1,3}[-. ]?)?(?:\(\d{2,3}\)[-. ]?)?\d{3}[-. ]?\d{4})|(\b\d{1,5}\s+\w+\s+(?:Street|Avenue|Road|Lane|St|Ave|Rd|Ln)\b)/i;
+        
+        window.ITEMS_COLLECTION_PATH = `/artifacts/${appId}/public/data/items`;
+
+        // --- AI SIMULATION / MODERATION LOGIC ---
+
+        /** * Simulates an AI moderation check for prohibited content. 
+         * Returns an error message string if a violation is found, otherwise returns null.
+         */
+        function sanitizeInput(text) {
+            const lowerText = text.toLowerCase();
+            
+            // 1. Check for Privacy Violations (Addresses/Phone Numbers)
+            if (PRIVACY_REGEX.test(text)) {
+                return "Privacy Violation: Please remove any addresses or phone numbers. We cannot allow personal identifying information.";
+            }
+            
+            // 2. Check for Prohibited Words
+            for (const word of BAD_WORDS) {
+                if (lowerText.includes(word)) {
+                    return `Content Violation: The word "${word}" is not allowed. Please use respectful language.`;
+                }
+            }
+            return null;
+        }
+
+        async function checkForDuplicates(name, description, category) {
+            if (!db) return false;
+            const q = query(
+                collection(db, window.ITEMS_COLLECTION_PATH),
+                where('category', '==', category),
+                limit(50)
+            );
+            const snapshot = await getDocs(q);
+            const newNameLower = name.trim().toLowerCase();
+            const newDescLower = description.trim().toLowerCase();
+
+            let isDuplicate = false;
+            snapshot.forEach(doc => {
+                const existing = doc.data();
+                const existingNameLower = existing.name.trim().toLowerCase();
+                if (existingNameLower === newNameLower) {
+                     isDuplicate = true;
+                }
+                if (existingNameLower.includes(newNameLower) || newNameLower.includes(existingNameLower)) {
+                    const existingDescLower = existing.description.trim().toLowerCase();
+                    if (existingDescLower.substring(0, 20) === newDescLower.substring(0, 20)) {
+                        isDuplicate = true;
+                    }
+                }
+            });
+            return isDuplicate;
+        }
+
+        /** Formats a star string based on the average rating. */
+        function formatStars(avgRating) {
+            if (typeof avgRating !== 'number' || isNaN(avgRating)) return '☆☆☆☆☆';
+            const rounded = Math.round(avgRating);
+            return '★'.repeat(rounded) + '☆'.repeat(5 - rounded);
+        }
+
+        // --- CORE APPLICATION FUNCTIONS (Exposed globally) ---
+        
+        window.updateItemAverage = async function(itemId, newRatingValue) {
+            const itemRef = doc(db, window.ITEMS_COLLECTION_PATH, itemId);
+
+            // Get the current item state (totalScore and ratingCount)
+            const itemSnap = await getDoc(itemRef);
+            if (!itemSnap.exists()) {
+                console.error("Item not found for update:", itemId);
+                return;
+            }
+            const data = itemSnap.data();
+            
+            // Calculate new total score and count
+            const currentTotalScore = data.totalScore || 0;
+            const currentCount = data.ratingCount || 0;
+            
+            const newTotalScore = currentTotalScore + newRatingValue;
+            const newCount = currentCount + 1;
+            const newAvgRating = parseFloat((newTotalScore / newCount).toFixed(1));
+
+            // Update the main item document with the new aggregate stats
+            await updateDoc(itemRef, {
+                totalScore: newTotalScore,
+                ratingCount: newCount,
+                avgRating: newAvgRating,
+            });
+        };
+
+        window.openReviewCategoryPicker = function() {
+            window.showView('main');
+            window.openModal('review-category-modal');
+        }
+
+        window.renderCategories = function() {
+            const container = document.getElementById('categories-container');
+            if (container) { // Check if element exists before manipulating
+                 container.innerHTML = CATEGORIES.map(cat => `
+                    <div onclick="window.openReviewForm('${cat.id}')"
+                         class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 cursor-pointer flex flex-col items-center text-center border border-gray-100 hover:border-indigo-400">
+                        <span class="text-5xl mb-3">${cat.icon}</span>
+                        <p class="font-semibold text-gray-700 text-lg">${cat.name}</p>
+                    </div>
+                `).join('');
+            }
+            
+            // Pre-load the modal content here
+            const pickerContent = document.getElementById('category-picker-content');
+            if (pickerContent) {
+                pickerContent.innerHTML = CATEGORIES.map(cat => `
+                    <div onclick="window.openReviewForm('${cat.id}'); window.closeModal('review-category-modal')"
+                         class="bg-gray-50 p-4 rounded-lg shadow-sm hover:bg-indigo-50 transition duration-150 cursor-pointer flex items-center space-x-3 border border-gray-100 hover:border-indigo-300">
+                        <span class="text-3xl">${cat.icon}</span>
+                        <p class="font-semibold text-gray-700">${cat.name}</p>
+                    </div>
+                `).join('');
+            }
+        };
+        
+        /** Sets up the real-time listener for all items. */
+        window.setupRatingsListener = function() {
+            const q = query(collection(db, window.ITEMS_COLLECTION_PATH));
+            const ratingsList = document.getElementById('ratings-list');
+            if (!ratingsList) return; // Safety check
+            
+            ratingsList.innerHTML = '<p class="text-gray-500 p-4">Fetching latest items...</p>';
+
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    ratingsList.innerHTML = '<p class="text-gray-500 p-4">No items submitted yet. Be the first!</p>';
+                    return;
+                }
+
+                const html = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const category = CATEGORIES.find(c => c.id === data.category) || { name: 'Unknown', icon: '❓' };
+                    
+                    const avgRating = data.avgRating || 0;
+                    const ratingCount = data.ratingCount || 0;
+                    const stars = formatStars(avgRating);
+                    const isOwner = data.originalCreatorId === userId;
+                    
+                    return `
+                        <div class="rating-card bg-white p-6 rounded-xl shadow-lg transition duration-300 hover:shadow-xl border-l-4 ${isOwner ? 'border-indigo-500' : 'border-gray-100'}">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-xl font-bold text-gray-800">${data.name}</h3>
+                                <div class="text-right">
+                                    <span class="text-3xl font-extrabold text-amber-500">${avgRating.toFixed(1)}</span>
+                                    <p class="text-xs text-gray-500">(${ratingCount} ratings)</p>
+                                </div>
+                            </div>
+                            <p class="text-sm text-indigo-600 font-medium my-2">${category.icon} ${category.name}</p>
+                            <p class="text-amber-500 text-lg mb-2">${stars}</p>
+                            <p class="text-gray-600 mt-2 line-clamp-3">${data.description}</p>
+                            
+                            <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                                <div class="flex space-x-3 items-center">
+                                    <button onclick="window.reportReview('${doc.id}')" class="text-red-500 hover:text-red-700 text-sm font-medium transition duration-200">
+                                        Report (${data.reports || 0})
+                                    </button>
+                                    <button onclick="window.openRatingSubmission('${doc.id}', '${data.name}')" 
+                                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-full shadow-md transition duration-200">
+                                        Submit Rating
+                                    </button>
+                                </div>
+                                <span class="text-xs text-gray-400">Creator: ${data.originalCreatorId.substring(0, 8)}...</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                ratingsList.innerHTML = html;
+            }, (error) => {
+                console.error("Error listening to items:", error);
+                ratingsList.innerHTML = '<p class="text-red-500 p-4">Error loading items. Check console for details.</p>';
+            });
+        };
+
+        window.handleReviewSubmit = async function(event) {
+            event.preventDefault();
+
+            if (!window.isAuthReady || !db) {
+                window.showCustomAlert("Error", "Authentication is not ready. Please wait a moment.");
+                return;
+            }
+
+            const btn = document.getElementById('submit-review-btn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            const name = document.getElementById('review-name').value.trim();
+            const description = document.getElementById('review-description').value.trim();
+            const initialRating = parseInt(document.getElementById('review-rating').value, 10);
+            const category = document.getElementById('review-category').value;
+
+            // --- CRITICAL MODERATION CHECK ---
+            const nameError = sanitizeInput(name);
+            const descError = sanitizeInput(description);
+
+            if (nameError || descError) {
+                // If violation detected, display the specific error message and prevent submission
+                const errorMessage = nameError || descError;
+                document.getElementById('description-error').textContent = errorMessage;
+                document.getElementById('description-error').classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Submit Item';
+                return;
+            }
+            document.getElementById('description-error').classList.add('hidden');
+            // --- END MODERATION CHECK ---
+
+            try {
+                const isDuplicate = await checkForDuplicates(name, description, category);
+                if (isDuplicate) {
+                    window.showCustomAlert("Duplicate Item Detected", "A very similar item already exists. Please rate the existing item instead of creating a new one.");
+                    btn.disabled = false;
+                    btn.textContent = 'Submit Item';
+                    return;
+                }
+            } catch (e) {
+                console.error("Duplicate check failed:", e);
+                window.showCustomAlert("Error", "Failed to check for duplicates. See console for details.");
+            }
+
+            try {
+                // 1. Create the main Item Document
+                const itemData = {
+                    name,
+                    description,
+                    category,
+                    originalCreatorId: userId,
+                    reports: 0,
+                    createdAt: serverTimestamp(),
+                    // Initial aggregated stats
+                    avgRating: initialRating,
+                    ratingCount: 1,
+                    totalScore: initialRating 
+                };
+
+                const itemRef = await addDoc(collection(db, window.ITEMS_COLLECTION_PATH), itemData);
+
+                // 2. Create the first individual rating in the subcollection
+                const ratingData = {
+                    userId,
+                    ratingValue: initialRating,
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(collection(itemRef, 'ratings'), ratingData);
+
+                // FIX: Reset the form after successful submission for better UX
+                document.getElementById('review-form').reset();
+
+                window.closeModal('review-modal');
+                window.showCustomAlert("Success!", `Your new item "${name}" has been created and your rating has been submitted.`);
+
+            } catch (e) {
+                console.error("Error saving new item/review:", e);
+                window.showCustomAlert("Save Error", `Failed to save your item: ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Submit Item';
+            }
+        };
+
+        window.submitIndividualRating = async function(event) {
+            event.preventDefault();
+
+            if (!window.isAuthReady || !db) return window.showCustomAlert("Error", "Authentication not ready.");
+
+            const btn = document.getElementById('submit-individual-rating-btn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+            
+            const itemId = document.getElementById('item-id-to-rate').value;
+            const newRatingValue = parseInt(document.getElementById('individual-rating').value, 10);
+
+            try {
+                // Check if user has already rated this item
+                const ratingsRef = collection(db, window.ITEMS_COLLECTION_PATH, itemId, 'ratings');
+                const q = query(ratingsRef, where('userId', '==', userId));
+                const existingRatingsSnap = await getDocs(q);
+
+                if (!existingRatingsSnap.empty) {
+                    window.showCustomAlert("Already Rated", "You have already submitted a rating for this item. Only one rating per user is allowed.");
+                    return;
+                }
+
+                // 1. Save the new individual rating to the subcollection
+                const ratingData = {
+                    userId,
+                    ratingValue: newRatingValue,
+                    createdAt: serverTimestamp()
+                };
+                await addDoc(ratingsRef, ratingData);
+
+                // 2. Recalculate and update the main item document
+                await window.updateItemAverage(itemId, newRatingValue);
+                
+                window.closeModal('individual-rating-modal');
+                window.showCustomAlert("Thank You!", "Your rating has been submitted successfully and the item's average score has been updated.");
+
+            } catch (e) {
+                console.error("Error submitting individual rating:", e);
+                window.showCustomAlert("Error", `Failed to submit rating: ${e.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Submit Rating';
+            }
+        };
+
+
+        window.reportReview = async function(itemId) {
+            if (!window.isAuthReady || !db) return window.showCustomAlert("Error", "Authentication not ready.");
+            try {
+                const itemRef = doc(db, window.ITEMS_COLLECTION_PATH, itemId);
+                await updateDoc(itemRef, {
+                    reports: increment(1) 
+                });
+                window.showCustomAlert("Report Submitted", "Thank you! The item has been reported for moderation.");
+            } catch (e) {
+                console.error("Error reporting item:", e);
+                window.showCustomAlert("Error", `Failed to report item: ${e.message}`);
+            }
+        };
+
+        window.deleteReview = async function(itemId) {
+            // PROTECTION
+            if (!window.isAdminLoggedIn) {
+                 return window.showCustomAlert("Access Denied", "Only administrators can delete items.");
+            }
+
+            if (!window.isAuthReady || !db) return window.showCustomAlert("Error", "Authentication not ready.");
+
+            // Removed the ineffective window.confirmAction() to comply with the environment rules.
+            // Relying on the isAdminLoggedIn check for security.
+            window.showCustomAlert("Warning: Permanent Action", `Proceeding with permanent deletion of item ID: ${itemId}.`);
+
+            try {
+                // NOTE: Deleting the item document will NOT automatically delete the subcollection (ratings).
+                // In a production app, this would require a server-side delete operation (Firebase Function).
+                await deleteDoc(doc(db, window.ITEMS_COLLECTION_PATH, itemId));
+                window.showCustomAlert("Success", "Item and its main data deleted successfully.");
+            } catch (e) {
+                console.error("Error deleting item:", e);
+                window.showCustomAlert("Error", `Failed to delete item: ${e.message}`);
+            }
+        };
+
+        window.renderAdminPanel = function() {
+            if (!window.isAdminLoggedIn) {
+                return window.openAdminLogin(); // Show login modal if not logged in
+            }
+
+            if (!window.isAuthReady || !db) {
+                document.getElementById('reports-list').innerHTML = '<p class="text-red-400">Database not ready for Admin Panel.</p>';
+                return;
+            }
+            
+            const reportsList = document.getElementById('reports-list');
+            const q = query(collection(db, window.ITEMS_COLLECTION_PATH), where('reports', '>', 0));
+
+            reportsList.innerHTML = '<p class="text-gray-500 p-4">Scanning for reported items...</p>';
+
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    reportsList.innerHTML = '<p class="text-green-600 p-4">🎉 No reported items at this time. All clear!</p>';
+                    return;
+                }
+
+                const html = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const category = CATEGORIES.find(c => c.id === data.category) || { name: 'Unknown' };
+
+                    return `
+                        <div class="bg-white p-5 rounded-xl shadow-md border border-red-200">
+                            <h4 class="text-xl font-bold text-red-700">REPORTED: ${data.name}</h4>
+                            <p class="text-sm text-red-600">Reports: <span class="font-bold">${data.reports}</span> | Category: ${category.name}</p>
+                            <p class="text-gray-700 my-2 italic">"${data.description}"</p>
+                            <p class="text-xs text-gray-500 mb-3">Item ID: ${doc.id} | Creator: ${data.originalCreatorId.substring(0, 8)}...</p>
+
+                            <div class="flex space-x-3 mt-3 pt-3 border-t border-gray-100">
+                                <button onclick="window.deleteReview('${doc.id}')"
+                                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200 shadow-md">
+                                    Permanently Delete
+                                </button>
+                                <button onclick="window.resolveReport('${doc.id}')"
+                                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition duration-200 shadow-md">
+                                    Resolve / Clear Reports
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                reportsList.innerHTML = html;
+            }, (error) => {
+                console.error("Error listening to reports:", error);
+                reportsList.innerHTML = '<p class="text-red-500 p-4">Error loading reports. Check console.</p>';
+            });
+        };
+        
+        window.resolveReport = async function(itemId) {
+            // PROTECTION
+            if (!window.isAdminLoggedIn) {
+                 return window.showCustomAlert("Access Denied", "Only administrators can resolve reports.");
+            }
+
+            if (!window.isAuthReady || !db) return window.showCustomAlert("Error", "Authentication not ready.");
+            try {
+                const itemRef = doc(db, window.ITEMS_COLLECTION_PATH, itemId);
+                await updateDoc(itemRef, { reports: 0 });
+                window.showCustomAlert("Resolved", "Report count cleared. Item is now back in the main feed without warning.");
+            } catch (e) {
+                console.error("Error resolving report:", e);
+                window.showCustomAlert("Error", "Failed to resolve report.");
+            }
+        };
+
+        // --- ADMIN LOGIN LOGIC ---
+        window.handleAdminLogin = function(event) {
+            event.preventDefault();
+            const id = document.getElementById('admin-id').value;
+            const pass = document.getElementById('admin-password').value;
+            
+            // Hardcoded Credentials for Demo: ID: 'anyrate', Password: 'anyrate@6677'
+            const adminId = 'anyrate';
+            const adminPass = 'anyrate@6677'; 
+
+            if (id === adminId && pass === adminPass) {
+                window.isAdminLoggedIn = true;
+                window.showCustomAlert("Success", "Admin login successful! You now have moderation rights.");
+                window.closeModal('admin-login-modal');
+                window.showView('admin'); // Directly show admin panel
+            } else {
+                window.showCustomAlert("Error", "Invalid ID or Password.");
+                window.isAdminLoggedIn = false;
+            }
+        };
+
+        window.openAdminLogin = function() {
+            if (window.isAdminLoggedIn) {
+                window.showView('admin');
+            } else {
+                window.openModal('admin-login-modal');
+            }
+        };
+
+
+        // --- FIREBASE INITIALIZATION ---
+        async function initializeFirebase() {
+            if (!firebaseConfig) {
+                console.error("Firebase configuration not found.");
+                window.showCustomAlert("Error", "Firebase configuration is missing. Cannot save data.");
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        window.userId = userId;
+                        window.isAuthReady = true;
+                        
+                        const userIdDisplay = document.getElementById('user-id-display-footer');
+                        if (userIdDisplay) userIdDisplay.textContent = `User ID: ${userId}`;
+                        
+                        // CRITICAL: Call the main setup functions when auth is confirmed
+                        window.renderCategories();
+                        window.setupRatingsListener(); 
+                    } else {
+                        console.error("Authentication failed. Attempting anonymous sign-in.");
+                        signInAnonymously(auth).catch(e => console.error("Anonymous sign-in failed:", e));
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase or signing in:", error);
+                window.showCustomAlert("Fatal Error", `Failed to initialize app: ${error.message}`);
+            }
+        }
+
+        // --- UI UTILITIES (Defined globally for HTML access) ---
+        window.showCustomAlert = function(title, message) {
+            document.getElementById('alert-title').textContent = title;
+            document.getElementById('alert-message').textContent = message;
+            document.getElementById('custom-alert').classList.remove('hidden');
+        };
+
+        window.closeCustomAlert = function() {
+            document.getElementById('custom-alert').classList.add('hidden');
+        };
+
+        window.openModal = function(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        };
+
+        window.closeModal = function(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        };
+        
+        window.openReviewForm = function(categoryId) {
+            if (!window.isAuthReady) {
+                window.showCustomAlert("Error", "Authentication is not ready. Please wait a moment.");
+                return;
+            }
+            const category = CATEGORIES.find(c => c.id === categoryId);
+            if (!category) return;
+
+            document.getElementById('review-category-display').textContent = `Category: ${category.name}`;
+            document.getElementById('review-category').value = category.id;
+            document.getElementById('review-form').reset();
+            document.getElementById('review-rating').value = 3;
+            document.getElementById('rating-value').textContent = '3 ★';
+            document.getElementById('description-error').classList.add('hidden');
+            window.openModal('review-modal');
+        };
+
+        // Function to open the rating modal for an existing item
+        window.openRatingSubmission = function(itemId, itemName) {
+            if (!window.isAuthReady) {
+                window.showCustomAlert("Error", "Authentication is not ready. Please wait a moment.");
+                return;
+            }
+            document.getElementById('item-id-to-rate').value = itemId;
+            document.getElementById('individual-rating-display').textContent = `Rating for: ${itemName}`;
+            document.getElementById('individual-rating').value = 3;
+            document.getElementById('individual-rating-value').textContent = '3 ★';
+
+            window.openModal('individual-rating-modal');
+        }
+        
+        window.showView = function(view) {
+            const main = document.getElementById('main-content-wrapper');
+            const admin = document.getElementById('admin-view');
+            if (view === 'admin') {
+                main.classList.add('hidden');
+                admin.classList.remove('hidden');
+                if (window.isAuthReady) {
+                    window.renderAdminPanel();
+                }
+            } else {
+                main.classList.remove('hidden');
+                admin.classList.add('hidden');
+            }
+        };
+
+        // Start the initialization process
+        initializeFirebase();
+    </script>
+
+
+    <!-- CLEAN, STICKY HEADER -->
+    <header class="sticky top-0 z-30 flex justify-between items-center bg-white p-4 sm:px-8 border-b border-gray-100 shadow-lg">
+        <button onclick="window.showView('main')" class="focus:outline-none">
+            <h1 class="text-2xl font-extrabold text-indigo-700 flex items-center">
+                UniRate 
+                <span class="ml-2 text-xl">🎓</span>
+            </h1>
+        </button>
+        
+        <div class="flex items-center space-x-3">
+            <!-- Add Review Button -->
+            <button onclick="window.openReviewCategoryPicker()" 
+                    title="Add New Item to Rate"
+                    class="p-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition duration-200 shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-circle w-6 h-6">
+                    <circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/>
+                </svg>
+            </button>
+            
+            <!-- Admin Panel Button -->
+            <button onclick="window.openAdminLogin()" 
+                    title="Access Admin Panel"
+                    class="p-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition duration-200 shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check w-6 h-6">
+                    <path d="M20 13V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7c0 4.7 3.2 8.3 7.5 9.1a2 2 0 0 0 1 0c4.3-.8 7.5-4.4 7.5-9.1Z"/><path d="m9 12 2 2 4-4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Wrapper (Fixed: Increased top padding for sticky header clearance) -->
+    <div class="p-4 sm:p-8 pt-20 sm:pt-24">
+
+        <!-- Custom Alert/Modal (Replaces alert()) -->
+        <div id="custom-alert" class="hidden fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center p-4" onclick="window.closeCustomAlert()">
+            <div class="bg-white rounded-xl p-6 w-full max-w-sm shadow-2xl transition duration-300 transform scale-100" onclick="event.stopPropagation()">
+                <h3 id="alert-title" class="text-xl font-bold mb-3 text-red-600">Alert</h3>
+                <p id="alert-message" class="text-gray-700 mb-6"></p>
+                <button onclick="window.closeCustomAlert()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold shadow-md transition duration-200">
+                    Got It
+                </button>
+            </div>
+        </div>
+        
+        <!-- ADMIN LOGIN MODAL -->
+        <div id="admin-login-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 z-40 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-6 w-full max-w-sm shadow-2xl" onclick="event.stopPropagation()">
+                <h3 class="text-2xl font-bold mb-4 text-indigo-700">🔐 Administrator Login</h3>
+                <p class="text-xs text-gray-500 mb-4">Note: This login is for demonstration purposes only. (Check script for credentials)</p>
+
+                <form id="admin-login-form" onsubmit="window.handleAdminLogin(event)">
+                    <div class="mb-4">
+                        <label for="admin-id" class="block text-sm font-medium text-gray-700 mb-1">Admin ID</label>
+                        <input type="text" id="admin-id" required placeholder="Enter Admin ID" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 shadow-sm">
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="admin-password" required placeholder="Enter Password" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 shadow-sm">
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="window.closeModal('admin-login-modal')" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-semibold transition duration-200">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold transition duration-200 shadow-md">
+                            Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- CATEGORY PICKER MODAL (Accessed by '+' button) -->
+        <div id="review-category-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 z-40 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-8 w-full max-w-xl shadow-2xl" onclick="event.stopPropagation()">
+                <h3 class="text-2xl font-bold mb-4 text-indigo-700 border-b pb-3">Choose Item Category</h3>
+                <p class="text-gray-500 mb-6">Select the best category for the item you wish to create and rate.</p>
+                <div id="category-picker-content" class="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto pr-2">
+                    <!-- Categories rendered here -->
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button type="button" onclick="window.closeModal('review-category-modal')" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-semibold transition duration-200">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- MAIN CONTENT AREA WRAPPER -->
+        <div id="main-content-wrapper" class="space-y-8">
+            <!-- Current Ratings View (Real-time updates) -->
+            <section id="ratings-view" class="p-6 sm:p-8 bg-white rounded-xl shadow-lg border border-gray-100">
+                <h2 id="ratings-title" class="text-2xl font-bold mb-6 text-indigo-700">Public Item Ratings Feed</h2>
+                <div id="ratings-list" class="space-y-6">
+                    <p class="text-gray-500">Waiting for authentication to fetch items...</p>
+                    <!-- Rating Cards will be rendered here by window.setupRatingsListener() -->
+                </div>
+            </section>
+        </div>
+
+        <!-- ADMIN PANEL VIEW (Fixed: Increased top padding for sticky header clearance) -->
+        <section id="admin-view" class="hidden space-y-8">
+             <div class="p-6 sm:p-8 bg-white rounded-xl shadow-lg border-t-4 border-red-500">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                    <h2 class="text-3xl font-bold text-red-700 mb-2 sm:mb-0">🚨 Admin Review Panel</h2>
+                    <button onclick="window.showView('main')" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-md transition duration-200">
+                        ← Back to Ratings
+                    </button>
+                </div>
+                <p class="text-red-600 mb-8">This panel shows all reported reviews for moderation. Items with reports > 0 are displayed here.</p>
+                <div id="reports-list" class="space-y-6">
+                    <p class="text-gray-500">Waiting for reported items...</p>
+                    <!-- Report Cards will be rendered here -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- REVIEW FORM MODAL (For creating a NEW Item) -->
+        <div id="review-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 z-40 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-8 w-full max-w-lg shadow-2xl" onclick="event.stopPropagation()">
+                <h3 class="text-2xl font-bold mb-4 text-indigo-700">New Item Submission</h3>
+                <p id="review-category-display" class="text-sm font-medium text-gray-500 mb-6"></p>
+
+                <form id="review-form" onsubmit="window.handleReviewSubmit(event)">
+                    <input type="hidden" id="review-category">
+
+                    <div class="mb-4">
+                        <label for="review-name" class="block text-sm font-medium text-gray-700 mb-1">Name of Item/Person/Concept</label>
+                        <input type="text" id="review-name" required placeholder="e.g., 'Best Thai Food in London'" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 shadow-sm">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="review-description" class="block text-sm font-medium text-gray-700 mb-1">Item Description</label>
+                        <textarea id="review-description" required rows="4" placeholder="Briefly describe the item/concept." class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 shadow-sm"></textarea>
+                        <!-- Error message area for moderation/privacy violations -->
+                        <p id="description-error" class="text-red-500 text-sm mt-1 hidden font-semibold">Content violation detected. Please modify your entry.</p>
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="review-rating" class="block text-sm font-medium text-gray-700 mb-3">Your Initial Rating (1 to 5 Stars)</label>
+                        <input type="range" id="review-rating" min="1" max="5" value="3" class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer" oninput="document.getElementById('rating-value').textContent = this.value + ' ★'">
+                        <span id="rating-value" class="block text-center text-2xl font-bold mt-2 text-amber-500">3 ★</span>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                        <button type="button" onclick="window.closeModal('review-modal')" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-semibold transition duration-200">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submit-review-btn" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold transition duration-200 shadow-md">
+                            Submit Item
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- RATING SUBMISSION MODAL (For rating an EXISTING Item) -->
+        <div id="individual-rating-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 z-40 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl p-8 w-full max-w-sm shadow-2xl" onclick="event.stopPropagation()">
+                <h3 class="text-2xl font-bold mb-4 text-amber-600">Submit Your Rating</h3>
+                <p id="individual-rating-display" class="text-sm font-medium text-gray-700 mb-6">Rating for: [Item Name]</p>
+
+                <form id="individual-rating-form" onsubmit="window.submitIndividualRating(event)">
+                    <input type="hidden" id="item-id-to-rate">
+
+                    <div class="mb-6">
+                        <label for="individual-rating" class="block text-sm font-medium text-gray-700 mb-3">Your Score (1 to 5 Stars)</label>
+                        <input type="range" id="individual-rating" min="1" max="5" value="3" class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer" oninput="document.getElementById('individual-rating-value').textContent = this.value + ' ★'">
+                        <span id="individual-rating-value" class="block text-center text-2xl font-bold mt-2 text-amber-500">3 ★</span>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                        <button type="button" onclick="window.closeModal('individual-rating-modal')" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-semibold transition duration-200">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submit-individual-rating-btn" class="px-6 py-2 bg-amber-600 hover:bg-amber-700 rounded-lg text-white font-semibold transition duration-200 shadow-md">
+                            Submit Rating
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FOOTER/USER INFO BAR -->
+    <footer class="p-4 bg-white border-t border-gray-100 mt-8 text-center text-xs text-gray-500">
+        <p>UniRate Platform | Authenticated User Status</p>
+        <p class="font-mono text-gray-400 mt-1 truncate">ID: <span id="user-id-display-footer">Loading...</span></p>
+    </footer>
+
+</body>
+</html>
+
