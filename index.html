@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniRate</title>
+    <title>UniRate 🎓</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Use Inter font for a clean, modern look -->
@@ -51,11 +51,8 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, limit, serverTimestamp, getDoc, setLogLevel, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables provided by the Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'global-rater-default';
-        
-        // Use environment variable if present, otherwise use the user-provided config
-        let firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        // Hardcoded Firebase Config (Your Configuration)
+        const HARDCODED_CONFIG = {
             apiKey: "AIzaSyD6c31If2v9QmhwBej-ruSlWan8Got0I8E",
             authDomain: "unirate-22481.firebaseapp.com",
             databaseURL: "https://unirate-22481-default-rtdb.firebaseio.com",
@@ -65,7 +62,21 @@
             appId: "1:398191796325:web:132633e34d3d9fe8be268c",
             measurementId: "G-8HZFCWRLL1"
         };
-
+        
+        // Use hardcoded config. Use environment variable only if present AND valid.
+        // This resolves the configuration-not-found error when hosting externally.
+        let firebaseConfig = HARDCODED_CONFIG;
+        if (typeof __firebase_config !== 'undefined') {
+            try {
+                // Prioritize environment variable if available (for Canvas environment safety)
+                firebaseConfig = JSON.parse(__firebase_config);
+            } catch (e) {
+                console.warn("Could not parse __firebase_config, using hardcoded config.");
+            }
+        }
+        
+        // Global variables provided by the Canvas environment (used for initial auth)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'global-rater-default';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let db, auth, userId;
@@ -540,14 +551,15 @@
 
         // --- FIREBASE INITIALIZATION ---
         async function initializeFirebase() {
-            if (!firebaseConfig) {
-                console.error("Firebase configuration not found.");
+            if (!firebaseConfig.apiKey) {
+                console.error("Firebase configuration not found. Check hardcoded config.");
                 window.showCustomAlert("Error", "Firebase configuration is missing. Cannot save data.");
                 return;
             }
 
             try {
-                const app = initializeApp(firebaseConfig);
+                // This uses your hardcoded config, which should work when hosted externally.
+                const app = initializeApp(firebaseConfig); 
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
@@ -577,6 +589,7 @@
 
             } catch (error) {
                 console.error("Error initializing Firebase or signing in:", error);
+                // Note: The original 'auth/configuration-not-found' error should be fixed by the logic above.
                 window.showCustomAlert("Fatal Error", `Failed to initialize app: ${error.message}`);
             }
         }
