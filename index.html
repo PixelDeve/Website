@@ -48,41 +48,13 @@
     <!-- Firebase Imports and Core Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-  import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-  import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, getDoc, setLogLevel, increment, limit } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+        import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, getDoc, setLogLevel, increment, limit } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-  let db, auth, userId;
-  window.isAuthReady = false;
-  window.isAdminLoggedIn = false;
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyD6c31If2v9QmhwBej-ruSlWan8Got0I8E",
-    authDomain: "unirate-22481.firebaseapp.com",
-    databaseURL: "https://unirate-22481-default-rtdb.firebaseio.com",
-    projectId: "unirate-22481",
-    storageBucket: "unirate-22481.appspot.com", // ✅ FIXED
-    messagingSenderId: "398191796325",
-    appId: "1:398191796325:web:132633e34d3d9fe8be268c",
-    measurementId: "G-8HZFCWRLL1"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
-
-  signInAnonymously(auth).then(() => console.log("Anonymous sign-in successful")).catch(console.error);
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      userId = user.uid;
-      window.isAuthReady = true;
-      document.getElementById("user-id-display-footer").textContent = user.uid;
-      window.renderCategories();
-      window.setupRatingsListener();
-    } else {
-      console.error("Auth failed");
-    }
-  });
+        // --- GLOBAL VARIABLES & CONSTANTS ---
+        let db, auth, userId;
+        window.isAuthReady = false;
+        window.isAdminLoggedIn = false; 
 
         const CATEGORIES = [
             { id: 'human', name: 'Humans', icon: '👤' },
@@ -96,14 +68,13 @@
         const BAD_WORDS = ['crap', 'stupid', 'idiot', 'damn', 'profanity1', 'profanity2']; 
         const PRIVACY_REGEX = /((?:\+?\d{1,3}[-. ]?)?(?:\(\d{2,3}\)[-. ]?)?\d{3}[-. ]?\d{4})|(\b\d{1,5}\s+\w+\s+(?:Street|Avenue|Road|Lane|St|Ave|Rd|Ln)\b)/i;
         
-        // --- CRITICAL CONFIGURATION FIX: USE USER'S CONFIG AS DEFAULT ---
-        // This configuration is used when the app runs outside the Canvas environment.
+        // --- CRITICAL CONFIGURATION FIX: CORRECTED STORAGE BUCKET URL ---
         const USER_EXPLICIT_CONFIG = {
             apiKey: "AIzaSyD6c31If2v9QmhwBej-ruSlWan8Got0I8E",
             authDomain: "unirate-22481.firebaseapp.com",
             databaseURL: "https://unirate-22481-default-rtdb.firebaseio.com",
             projectId: "unirate-22481",
-            storageBucket: "unirate-22481.firebasestorage.app",
+            storageBucket: "unirate-22481.appspot.com", // <-- FIX 2: Corrected to .appspot.com
             messagingSenderId: "398191796325",
             appId: "1:398191796325:web:132633e34d3d9fe8be268c",
             measurementId: "G-8HZFCWRLL1"
@@ -131,6 +102,7 @@
             
             // 2. Set Collection Path using the determined appId
             window.ITEMS_COLLECTION_PATH = `/artifacts/${appId}/public/data/items`;
+            // NOTE: Ensure your Firebase Security Rules grant read/write access to this path for authenticated users.
 
             setLogLevel('Debug');
             console.debug("Config being used:", firebaseConfig);
@@ -143,7 +115,6 @@
 
             try {
                 // 3. Initialize Firebase App 
-                // CRITICAL: firebaseConfig is guaranteed to contain the user's data here.
                 const app = initializeApp(firebaseConfig); 
                 db = getFirestore(app);
                 auth = getAuth(app);
@@ -151,17 +122,27 @@
                 // 4. Sign in with Custom Token or Anonymously
                 const authToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 
-                if (authToken) {
-                    console.log("Attempting sign in with custom token...");
-                    await signInWithCustomToken(auth, authToken);
-                } else {
-                    console.log("Attempting anonymous sign in...");
-                    await signInAnonymously(auth);
+                try {
+                    if (authToken) {
+                        console.log("DEBUG: 4a. Attempting sign in with custom token...");
+                        await signInWithCustomToken(auth, authToken);
+                        console.log("DEBUG: 4b. Custom token sign-in promise resolved.");
+                    } else {
+                        console.log("DEBUG: 4c. Attempting anonymous sign in...");
+                        await signInAnonymously(auth);
+                        console.log("DEBUG: 4d. Anonymous sign-in promise resolved.");
+                    }
+                } catch (e) {
+                    console.error("DEBUG: 4e. Sign-in attempt failed in try/catch:", e);
+                    window.showCustomAlert("Auth Error", `Initial sign-in failed: ${e.message}. **Check if Anonymous Auth is enabled in your Firebase project.**`);
                 }
 
                 // 5. Set up Auth State Listener
+                console.log("DEBUG: 5a. Setting up onAuthStateChanged listener.");
+
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
+                        console.log("DEBUG: 5b. onAuthStateChanged triggered: User is authenticated.");
                         userId = user.uid;
                         window.userId = userId;
                         window.isAuthReady = true;
@@ -174,7 +155,7 @@
                         window.setupRatingsListener(); 
                         console.log("Firebase Auth and Firestore initialized successfully. User ID:", userId);
                     } else {
-                        console.error("Authentication failed or user logged out unexpectedly.");
+                        console.error("DEBUG: 5c. onAuthStateChanged triggered: User is NOT authenticated. Check Firebase console for specific error.");
                         window.showCustomAlert("Error", "Authentication failed. App functionality is limited.");
                     }
                 });
@@ -312,7 +293,8 @@
             const ratingsList = document.getElementById('ratings-list');
             if (!ratingsList) return; // Safety check
             
-            ratingsList.innerHTML = '<p class="text-gray-500 p-4">Fetching latest items...</p>';
+            // Change status message to be more accurate post-authentication
+            ratingsList.innerHTML = '<p class="text-gray-500 p-4">✅ Authentication successful. Fetching latest items...</p>';
 
             onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
@@ -798,7 +780,7 @@
             <section id="ratings-view" class="p-6 sm:p-8 bg-white rounded-xl shadow-lg border border-gray-100">
                 <h2 id="ratings-title" class="text-2xl font-bold mb-6 text-indigo-700">Public Item Ratings Feed</h2>
                 <div id="ratings-list" class="space-y-6">
-                    <p class="text-gray-500">Waiting for authentication to fetch items...</p>
+                    <p class="text-gray-500">Checking Firebase authentication status...</p>
                     <!-- Rating Cards will be rendered here by window.setupRatingsListener() -->
                 </div>
             </section>
