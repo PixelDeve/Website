@@ -48,11 +48,14 @@
     <!-- Firebase Imports and Core Logic (CRITICAL: MUST BE FIRST) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // NOTE: We only import signInAnonymously because the custom token is an environment-specific feature.
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, limit, serverTimestamp, getDoc, setLogLevel, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Hardcoded Firebase Config (Your Configuration)
-        const HARDCODED_CONFIG = {
+        // --- HARDCODED CONFIGURATION ONLY ---
+        // This is the configuration needed for external hosting. 
+        // All references to internal platform variables (__firebase_config, __initial_auth_token) are removed.
+        const firebaseConfig = {
             apiKey: "AIzaSyD6c31If2v9QmhwBej-ruSlWan8Got0I8E",
             authDomain: "unirate-22481.firebaseapp.com",
             databaseURL: "https://unirate-22481-default-rtdb.firebaseio.com",
@@ -63,27 +66,17 @@
             measurementId: "G-8HZFCWRLL1"
         };
         
-        // Use hardcoded config. Use environment variable only if present AND valid.
-        // This resolves the configuration-not-found error when hosting externally.
-        let firebaseConfig = HARDCODED_CONFIG;
-        if (typeof __firebase_config !== 'undefined') {
-            try {
-                // Prioritize environment variable if available (for Canvas environment safety)
-                firebaseConfig = JSON.parse(__firebase_config);
-            } catch (e) {
-                console.warn("Could not parse __firebase_config, using hardcoded config.");
-            }
-        }
+        // Use a static application ID and user ID for the public collection path
+        const appId = 'global-rater-default'; 
         
-        // Global variables provided by the Canvas environment (used for initial auth)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'global-rater-default';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
         let db, auth, userId;
         window.isAuthReady = false;
         window.isAdminLoggedIn = false; 
 
         setLogLevel('Debug');
+
+        // The public collection path is constructed using the static appId
+        window.ITEMS_COLLECTION_PATH = `/artifacts/${appId}/public/data/items`;
 
         // --- GLOBAL CONSTANTS AND DATA ---
         const CATEGORIES = [
@@ -101,8 +94,7 @@
         // Regex to detect common phone numbers and simple street addresses
         const PRIVACY_REGEX = /((?:\+?\d{1,3}[-. ]?)?(?:\(\d{2,3}\)[-. ]?)?\d{3}[-. ]?\d{4})|(\b\d{1,5}\s+\w+\s+(?:Street|Avenue|Road|Lane|St|Ave|Rd|Ln)\b)/i;
         
-        window.ITEMS_COLLECTION_PATH = `/artifacts/${appId}/public/data/items`;
-
+        
         // --- AI SIMULATION / MODERATION LOGIC ---
 
         /** * Simulates an AI moderation check for prohibited content. 
@@ -552,22 +544,19 @@
         // --- FIREBASE INITIALIZATION ---
         async function initializeFirebase() {
             if (!firebaseConfig.apiKey) {
-                console.error("Firebase configuration not found. Check hardcoded config.");
+                console.error("Firebase configuration not found. Cannot save data.");
                 window.showCustomAlert("Error", "Firebase configuration is missing. Cannot save data.");
                 return;
             }
 
             try {
-                // This uses your hardcoded config, which should work when hosted externally.
+                // 1. Initialize Firebase App (using the hardcoded config)
                 const app = initializeApp(firebaseConfig); 
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // 2. Sign in Anonymously (Standard external hosting auth flow)
+                await signInAnonymously(auth);
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
@@ -582,14 +571,12 @@
                         window.renderCategories();
                         window.setupRatingsListener(); 
                     } else {
-                        console.error("Authentication failed. Attempting anonymous sign-in.");
-                        signInAnonymously(auth).catch(e => console.error("Anonymous sign-in failed:", e));
+                        console.error("Authentication failed after initial sign-in attempt.");
                     }
                 });
 
             } catch (error) {
                 console.error("Error initializing Firebase or signing in:", error);
-                // Note: The original 'auth/configuration-not-found' error should be fixed by the logic above.
                 window.showCustomAlert("Fatal Error", `Failed to initialize app: ${error.message}`);
             }
         }
