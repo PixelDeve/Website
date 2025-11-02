@@ -47,14 +47,42 @@
 
     <!-- Firebase Imports and Core Logic -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, getDoc, setLogLevel, increment, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+  import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+  import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, getDoc, setLogLevel, increment, limit } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-        // --- GLOBAL VARIABLES & CONSTANTS ---
-        let db, auth, userId;
-        window.isAuthReady = false;
-        window.isAdminLoggedIn = false; 
+  let db, auth, userId;
+  window.isAuthReady = false;
+  window.isAdminLoggedIn = false;
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6c31If2v9QmhwBej-ruSlWan8Got0I8E",
+    authDomain: "unirate-22481.firebaseapp.com",
+    databaseURL: "https://unirate-22481-default-rtdb.firebaseio.com",
+    projectId: "unirate-22481",
+    storageBucket: "unirate-22481.appspot.com", // ✅ FIXED
+    messagingSenderId: "398191796325",
+    appId: "1:398191796325:web:132633e34d3d9fe8be268c",
+    measurementId: "G-8HZFCWRLL1"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+
+  signInAnonymously(auth).then(() => console.log("Anonymous sign-in successful")).catch(console.error);
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      userId = user.uid;
+      window.isAuthReady = true;
+      document.getElementById("user-id-display-footer").textContent = user.uid;
+      window.renderCategories();
+      window.setupRatingsListener();
+    } else {
+      console.error("Auth failed");
+    }
+  });
 
         const CATEGORIES = [
             { id: 'human', name: 'Humans', icon: '👤' },
