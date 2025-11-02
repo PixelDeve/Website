@@ -68,10 +68,9 @@
         const BAD_WORDS = ['crap', 'stupid', 'idiot', 'damn', 'profanity1', 'profanity2']; 
         const PRIVACY_REGEX = /((?:\+?\d{1,3}[-. ]?)?(?:\(\d{2,3}\)[-. ]?)?\d{3}[-. ]?\d{4})|(\b\d{1,5}\s+\w+\s+(?:Street|Avenue|Road|Lane|St|Ave|Rd|Ln)\b)/i;
         
-        // --- CRITICAL CONFIGURATION FIX FOR LOCAL/GITHUB RUN ---
-        // This configuration uses the details provided by the user.
-        // It is used when the app runs outside the Canvas environment (e.g., GitHub, local server).
-        const USER_CONFIG_PLACEHOLDER = {
+        // --- CRITICAL CONFIGURATION FIX: USE USER'S CONFIG AS DEFAULT ---
+        // This configuration is used when the app runs outside the Canvas environment.
+        const USER_EXPLICIT_CONFIG = {
             apiKey: "AIzaSyD6c31If2v9QmhwBej-ruSlWan8Got0I8E",
             authDomain: "unirate-22481.firebaseapp.com",
             databaseURL: "https://unirate-22481-default-rtdb.firebaseio.com",
@@ -82,33 +81,30 @@
             measurementId: "G-8HZFCWRLL1"
         };
         
-        // --- CORE FIREBASE INITIALIZATION GUARANTEE ---
+        let firebaseConfig = USER_EXPLICIT_CONFIG; // Default to user's config
+        let appId = USER_EXPLICIT_CONFIG.projectId || 'global-rater-default'; 
+
         document.addEventListener('DOMContentLoaded', async () => {
             
             // 1. Determine Firebase Config (Canvas vs. Local)
-            let firebaseConfig = null;
             if (typeof __firebase_config !== 'undefined') {
                 try {
-                    // Running in Canvas: Use provided configuration
+                    // Running in Canvas: Override with provided configuration
                     firebaseConfig = JSON.parse(__firebase_config);
+                    appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
                     console.log("Using Canvas environment Firebase configuration.");
                 } catch (e) {
-                    console.error("Could not parse __firebase_config, falling back to user placeholder config.");
-                    firebaseConfig = USER_CONFIG_PLACEHOLDER;
+                    // Fallback to user's explicit config if Canvas parsing fails
+                    console.error("Could not parse __firebase_config, falling back to user explicit config.");
                 }
             } else {
-                // Running outside Canvas (GitHub/Local): Use the explicit user-provided config
-                firebaseConfig = USER_CONFIG_PLACEHOLDER;
                 console.warn("Canvas environment variables not found. Using user-provided configuration for local run.");
             }
             
-            // 2. Get App ID
-            // In Canvas, use __app_id. Outside Canvas, use the projectId from the config as a fallback.
-            const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId || 'global-rater-default'; 
+            // 2. Set Collection Path using the determined appId
             window.ITEMS_COLLECTION_PATH = `/artifacts/${appId}/public/data/items`;
 
             setLogLevel('Debug');
-            console.log("Starting Firebase setup after DOMContentLoaded...");
             console.debug("Config being used:", firebaseConfig);
 
             if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("YOUR_")) {
@@ -119,6 +115,7 @@
 
             try {
                 // 3. Initialize Firebase App 
+                // CRITICAL: firebaseConfig is guaranteed to contain the user's data here.
                 const app = initializeApp(firebaseConfig); 
                 db = getFirestore(app);
                 auth = getAuth(app);
